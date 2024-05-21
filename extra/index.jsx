@@ -19,12 +19,12 @@ const CustomTableHeaderCell = styled(TableCell)(({ theme }) => ({
     textAlign: "center",
     backgroundColor: "#FAF8F2"
 }));
+
 const CustomTableCell = styled(TableCell)(({ theme }) => ({
     padding: theme.spacing(1),
     border: '1px solid black', // Adding border to the table cell
     textAlign: "center",
     backgroundColor: "#D3D3D3"
-
 }));
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
@@ -36,8 +36,7 @@ const EXTRA = () => {
     const colors = tokens(theme.palette.mode);
 
     const data = [
-        { name: 'Ashu', age: 16 },
-        { name: 'John', age: 25 }
+        { Platform: 'A1', Carrier: '12', Code: 'A123', Plan: 'P111', Reg: 'Reg233' }
     ];
 
     return (
@@ -66,14 +65,12 @@ const EXTRA = () => {
                                 <TableBody>
                                     {data.map((item, index) => (
                                         <React.Fragment key={index}>
-                                            <StyledTableRow>
-                                                <StyledTableCell>Name</StyledTableCell>
-                                                <CustomTableCell>{item.name}</CustomTableCell>
-                                            </StyledTableRow>
-                                            <StyledTableRow>
-                                                <StyledTableCell>Age</StyledTableCell>
-                                                <CustomTableCell>{item.age}</CustomTableCell>
-                                            </StyledTableRow>
+                                            {Object.keys(item).map((key, index) => (
+                                                <StyledTableRow key={index}>
+                                                    <StyledTableCell>{key}</StyledTableCell>
+                                                    <CustomTableCell>{item[key]}</CustomTableCell>
+                                                </StyledTableRow>
+                                            ))}
                                         </React.Fragment>
                                     ))}
                                 </TableBody>
