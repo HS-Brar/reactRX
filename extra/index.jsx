@@ -58,9 +58,9 @@ const EXTRA = () => {
                         <TableContainer component={Paper}>
                             <Table>
                                 <TableHead>
-                                    <StyledTableRow>
+                                    <TableRow>
                                         <CustomTableHeaderCell colSpan={2}>SOT Header</CustomTableHeaderCell>
-                                    </StyledTableRow>
+                                    </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {data.map((item, index) => (
@@ -68,7 +68,17 @@ const EXTRA = () => {
                                             {Object.keys(item).map((key, index) => (
                                                 <StyledTableRow key={index}>
                                                     <StyledTableCell>{key}</StyledTableCell>
-                                                    <CustomTableCell>{item[key]}</CustomTableCell>
+                                                    {key === 'Carrier' || key === 'Plan' ? (
+                                                        <CustomTableCell>{item[key]}</CustomTableCell>
+                                                    ) : (
+                                                        <TableCell
+                                                            padding="normal"
+                                                            border="1px solid black"
+                                                            textAlign="center"
+                                                        >
+                                                            {item[key]}
+                                                        </TableCell>
+                                                    )}
                                                 </StyledTableRow>
                                             ))}
                                         </React.Fragment>
