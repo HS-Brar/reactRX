@@ -1,5 +1,19 @@
-import axios from 'axios';
 import { useState } from 'react';
+import axios from 'axios';
+
+const useAlert = () => {
+    const [alert, setAlert] = useState({ message: '', severity: '' });
+
+    const showAlert = (message, severity) => {
+        setAlert({ message, severity });
+    };
+
+    const clearAlert = () => {
+        setAlert({ message: '', severity: '' });
+    };
+
+    return { alert, showAlert, clearAlert };
+};
 
 const apiClient = axios.create({
     baseURL: 'http://10.197.8.17:2023/hmis/api/v1',
@@ -7,29 +21,6 @@ const apiClient = axios.create({
         'Content-Type': 'application/json',
     },
 });
-
-// Define a state variable to hold alert message and severity
-const [alert, setAlert] = useState({ message: '', severity: '' });
-
-apiClient.interceptors.response.use(
-    response => {
-        // Handle success response
-        if (response.data.success) {
-            setAlert({ message: response.data.message, severity: 'success' });
-        }
-        return response;
-    },
-    error => {
-        // Handle error response
-        if (error.response) {
-            const errorMessage = error.response.data.message || 'An error occurred';
-            setAlert({ message: errorMessage, severity: 'error' });
-        } else {
-            setAlert({ message: error.message || 'An error occurred', severity: 'error' });
-        }
-        return Promise.reject(error);
-    }
-);
 
 const api = {
     get: (url, params) => {
@@ -63,4 +54,4 @@ const handleError = (error) => {
     throw error;
 };
 
-export { api as default, alert };
+export { api as default, useAlert };
