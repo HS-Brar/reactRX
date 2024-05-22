@@ -1,174 +1,211 @@
 import React, { useState } from "react";
+import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
+import { Form, FormikProvider, useFormik } from "formik";
+import * as Yup from "yup";
+import { regSidebar, pharSidebar, docSidebar, adminSidebar } from "../data/demoData";
+
 import {
-    Box,
-    Typography,
-    Grid,
-    useTheme,
-    Divider,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableRow,
-    TableHead,
-    Paper,
-    TextField,
-    MenuItem, // Import MenuItem for the dropdown options
-    Select // Import Select for the dropdown
+  Box,
+  Checkbox,
+  FormControlLabel,
+  IconButton,
+  InputAdornment,
+  Link,
+  Stack,
+  TextField,
+  LinearProgress // Import LinearProgress
 } from "@mui/material";
-import Header from "../../components/Header";
-import { tokens } from "../../theme";
+import { LoadingButton } from "@mui/lab";
+import { Icon } from "@iconify/react";
+import { motion } from "framer-motion";
 
-const EXTRA = () => {
-    const theme = useTheme();
-    const colors = tokens(theme.palette.mode);
-
-    const data = [
-        {
-            "Project": '',
-            "Env": '12',
-            "BAT": 'A123',
-            "Input Type CAG": 'P111',
-            "Carrier ID": 'Reg233',
-            "LOB": 'Reg233',
-            "Run Mode": 'Reg233',
-            "Pull Product": 'Reg233',
-            "Pull GPI": 'Reg233',
-            "Exclude Global Plans": 'Reg233',
-            "Pull Termed CAG levels": 'Reg233',
-            "Pull Inactive CAG levels": 'Reg233',
-            "Pull Termed PLAN levels": 'Reg233',
-            "Pull Inactive PLAN levels": 'Reg233',
-            "Network": 'Reg233'
-        }
-    ];
-
-    const renderTable = () => (
-        <TableContainer component={Paper}>
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell colSpan={2} sx={{ textAlign: "center" }}>SOT Parsed</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {data.map((item, index) => (
-                        <React.Fragment key={index}>
-                            {
-                                Object.keys(item).map((key, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell>{key}</TableCell>
-                                        {key === "Project" || key === "Network" ? (
-                                            <TableCell>
-                                                <TextField
-                                                    value={item[key]}
-                                                    onChange={(e) => handleTextFieldChange(e, key)}
-                                                />
-                                            </TableCell>
-                                        ) : key === "Env" || key === "BAT" || key === "Input Type CAG" || key === "Carrier ID" || key === "LOB" ? (
-                                            <TableCell style={{ backgroundColor: '#f0f0f0' }}>{item[key]}</TableCell>
-                                        ) : (
-                                            <TableCell>
-                                                <Select
-                                                    value={item[key]}
-                                                    onChange={(e) => handleDropdownChange(e, key)}
-                                                >
-                                                    {/* Add options for Select components */}
-                                                </Select>
-                                            </TableCell>
-                                        )}
-                                    </TableRow>
-                                ))
-                            }
-                        </React.Fragment>
-                    ))}
-                </TableBody>
-            </Table>
-        </TableContainer>
-    );
-
-    // Function to handle dropdown changes
-    const handleDropdownChange = (event, key) => {
-        const { value } = event.target;
-        // You can implement logic to handle the change here, such as updating the state
-    };
-
-    // Function to handle text field changes
-    const handleTextFieldChange = (event, key) => {
-        const { value } = event.target;
-        // You can implement logic to handle the change here, such as updating the state
-    };
-
-    return (
-        <Box m="10px">
-            {/* HEADER */}
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Header title="EXTRA" />
-            </Box>
-
-            {/* GRID CONTAINER */}
-            <Grid container spacing={2}>
-                {/* LEFT PORTION */}
-                <Grid item xs={8}>
-                    <Box
-                        p={2}
-                        backgroundColor={colors.primary[400]}
-                        display="flex"
-                        flexDirection="column"
-                        alignItems="center"
-                        justifyContent="center"
-                        height="100%"
-                    >
-                        <Divider
-                            textAlign="left"
-                            variant="middle"
-                            sx={{
-                                borderColor: "#3da58a",
-                                "&::before, &::after": { borderColor: "#3da58a" },
-                                color: "primary.main",
-                                width: '100%'
-                            }}
-                        >
-                            <Typography
-                                sx={{
-                                    fontSize: '1.25rem', // Increase font size
-                                    fontWeight: 'bold'  // Make text bold
-                                }}
-                            >
-                                Portion Left
-                            </Typography>
-                        </Divider>
-                        {renderTable()}
-                    </Box>
-                </Grid>
-
-                {/* RIGHT PORTION */}
-                <Grid item xs={4}>
-                    <Box p={2} backgroundColor={colors.primary[400]}>
-                        <Divider
-                            textAlign="left"
-                            variant="middle"
-                            sx={{
-                                borderColor: "#3da58a",
-                                "&::before, &::after": { borderColor: "#3da58a" },
-                                color: "primary.main"
-                            }}
-                        >
-                            Portion Right
-                        </Divider>
-                        <Grid container spacing={0}>
-                            <Grid item xs={6}>
-                                {renderTable()}
-                            </Grid>
-                            <Grid item xs={6}>
-                                {renderTable()}
-                            </Grid>
-                        </Grid>
-                    </Box>
-                </Grid>
-            </Grid>
-        </Box>
-    );
+let easing = [0.6, -0.05, 0.01, 0.99];
+const animate = {
+  opacity: 1,
+  y: 0,
+  transition: {
+    duration: 0.6,
+    ease: easing,
+    delay: 0.16,
+  },
 };
 
-export default EXTRA;
+const LoginForm = (props) => {
+  const { entityRID } = props;
+  const [jwtToken, setJwtToken] = useState("");
+  const [progressVisible, setProgressVisible] = useState(false); // State to control visibility of progress bar
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const LoginSchema = Yup.object().shape({
+    username: Yup.string().required("Username is required"),
+    password: Yup.string().required("Password is required"),
+  });
+
+  const formik = useFormik({
+    initialValues: {
+      username: "",
+      password: "",
+      entityRID: "",
+    },
+    validationSchema: LoginSchema,
+    onSubmit: async (values) => {
+      setProgressVisible(true); // Show progress bar when submitting form
+      //values.entityRID="37";
+      values.entityRID = props.entityRID;
+
+      fetch('http://10.197.8.17:2023/hmis/api/v1/authentication/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(values),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            return response.json().then(errorData => {
+              const errorMessage = `Network response was not ok. Status: ${response.status}, Message: ${errorData.message}`;
+              throw new Error(errorMessage);
+            });
+          }
+          return response.json();
+        })
+        .then((data) => {
+          setJwtToken(data.accessToken);
+          localStorage.setItem("jwtToken", data.accessToken);
+          localStorage.setItem("userFullName", data.userFullName);
+          localStorage.setItem("entityName", data.entityName);
+          localStorage.setItem("userType", data.userType);
+
+          const sideBarMenu =
+            data.userType === "Pharmacy User" ? pharSidebar
+              : data.userType === 'Registration User' ? regSidebar
+                : data.userType === "Doctor" ? docSidebar
+                  : data.userType === "Admin" ? adminSidebar
+                    : adminSidebar;
+          props.setPeople(sideBarMenu);
+          props.setAuth(true);
+          navigate(from, { replace: true });
+        })
+        .catch((error) => {
+          console.error('Error during login:', error);
+        })
+        .finally(() => {
+          setProgressVisible(false); // Hide progress bar when API response is received
+        });
+    },
+  });
+
+
+  const { errors, touched, values, isSubmitting, handleSubmit, getFieldProps } = formik;
+
+  return (
+    <FormikProvider value={formik}>
+      <Form autoComplete="off" noValidate onSubmit={handleSubmit}>
+        <Box
+          component={motion.div}
+          animate={{
+            transition: {
+              staggerChildren: 0.55,
+            },
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+            }}
+            component={motion.div}
+            initial={{ opacity: 0, y: 40 }}
+            animate={animate}
+          >
+            <TextField
+              fullWidth
+              autoComplete="username"
+              type="text"
+              label="Username"
+              {...getFieldProps("username")}
+              error={Boolean(touched.username && errors.username)}
+              helperText={touched.username && errors.username}
+            />
+
+            <TextField
+              fullWidth
+              autoComplete="current-password"
+              type={showPassword ? "text" : "password"}
+              label="Password"
+              {...getFieldProps("password")}
+              error={Boolean(touched.password && errors.password)}
+              helperText={touched.password && errors.password}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword((prev) => !prev)}
+                    >
+                      {showPassword ? (
+                        <Icon icon="eva:eye-fill" />
+                      ) : (
+                        <Icon icon="eva:eye-off-fill" />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+
+          <Box
+            component={motion.div}
+            initial={{ opacity: 0, y: 20 }}
+            animate={animate}
+          >
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ my: 2 }}
+            >
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    {...getFieldProps("remember")}
+                    checked={values.remember}
+                  />
+                }
+                label="Remember me"
+              />
+
+              <Link
+                component={RouterLink}
+                variant="subtitle2"
+                to="#"
+                underline="hover"
+              >
+                Forgot password?
+              </Link>
+            </Stack>
+
+            <LoadingButton
+              fullWidth
+              size="large"
+              type="submit"
+              variant="contained"
+              loading={isSubmitting}
+            >
+              {isSubmitting ? "loading..." : "Login"}
+            </LoadingButton>
+
+            {progressVisible && <LinearProgress />} {/* Show progress bar if progressVisible state is true */}
+          </Box>
+        </Box>
+      </Form>
+    </FormikProvider>
+  );
+};
+
+export default LoginForm;
