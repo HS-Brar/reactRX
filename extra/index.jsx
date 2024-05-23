@@ -1,211 +1,189 @@
-import React, { useState } from "react";
-import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
-import { Form, FormikProvider, useFormik } from "formik";
-import * as Yup from "yup";
-import { regSidebar, pharSidebar, docSidebar, adminSidebar } from "../data/demoData";
-
+import React, { useState } from 'react';
 import {
-  Box,
-  Checkbox,
-  FormControlLabel,
-  IconButton,
-  InputAdornment,
-  Link,
-  Stack,
-  TextField,
-  LinearProgress // Import LinearProgress
+    Box,
+    FormControl,
+    Grid,
+    TextField,
+    Button,
+    Select,
+    MenuItem,
+    Checkbox,
+    InputLabel,
+    OutlinedInput,
+    ListItemText,
 } from "@mui/material";
-import { LoadingButton } from "@mui/lab";
-import { Icon } from "@iconify/react";
-import { motion } from "framer-motion";
+import { tokens } from "../../theme";
+import Header from "../../components/Header";
+import * as Yup from 'yup';
+import axios from 'axios';
 
-let easing = [0.6, -0.05, 0.01, 0.99];
-const animate = {
-  opacity: 1,
-  y: 0,
-  transition: {
-    duration: 0.6,
-    ease: easing,
-    delay: 0.16,
-  },
-};
+const EXTRA = () => {
 
-const LoginForm = (props) => {
-  const { entityRID } = props;
-  const [jwtToken, setJwtToken] = useState("");
-  const [progressVisible, setProgressVisible] = useState(false); // State to control visibility of progress bar
-  const navigate = useNavigate();
-  const location = useLocation();
-  const from = location.state?.from?.pathname || "/";
+    const colors = tokens('light'); // You can manually pass 'light' or 'dark' mode here
 
-  const [showPassword, setShowPassword] = useState(false);
+    const [saveForm, setSaveForm] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        role: []
+    });
 
-  const LoginSchema = Yup.object().shape({
-    username: Yup.string().required("Username is required"),
-    password: Yup.string().required("Password is required"),
-  });
+    const [errors, setErrors] = useState({
+        firstName: '',
+        lastName: '',
+        email: ''
+    });
 
-  const formik = useFormik({
-    initialValues: {
-      username: "",
-      password: "",
-      entityRID: "",
-    },
-    validationSchema: LoginSchema,
-    onSubmit: async (values) => {
-      setProgressVisible(true); // Show progress bar when submitting form
-      //values.entityRID="37";
-      values.entityRID = props.entityRID;
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setSaveForm(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+        // Clear validation errors when the user starts typing again
+        setErrors(prevErrors => ({
+            ...prevErrors,
+            [name]: ''
+        }));
+    };
 
-      fetch('http://10.197.8.17:2023/hmis/api/v1/authentication/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(values),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            return response.json().then(errorData => {
-              const errorMessage = `Network response was not ok. Status: ${response.status}, Message: ${errorData.message}`;
-              throw new Error(errorMessage);
+    const handleTagChange = (event) => {
+        setSaveForm(prevState => ({
+            ...prevState,
+            role: event.target.value
+        }));
+    };
+
+    const schema = Yup.object().shape({
+        firstName: Yup.string().required('First name is required'),
+        lastName: Yup.string().required('Last name is required'),
+        email: Yup.string().email('Invalid email address').required('Email is required')
+    });
+
+    const validateForm = async () => {
+        try {
+            await schema.validate(saveForm, { abortEarly: false });
+            setErrors({});
+            return true;
+        } catch (validationErrors) {
+            const newErrors = {};
+            validationErrors.inner.forEach(err => {
+                newErrors[err.path] = err.message;
             });
-          }
-          return response.json();
-        })
-        .then((data) => {
-          setJwtToken(data.accessToken);
-          localStorage.setItem("jwtToken", data.accessToken);
-          localStorage.setItem("userFullName", data.userFullName);
-          localStorage.setItem("entityName", data.entityName);
-          localStorage.setItem("userType", data.userType);
+            setErrors(newErrors);
+            return false;
+        }
+    };
 
-          const sideBarMenu =
-            data.userType === "Pharmacy User" ? pharSidebar
-              : data.userType === 'Registration User' ? regSidebar
-                : data.userType === "Doctor" ? docSidebar
-                  : data.userType === "Admin" ? adminSidebar
-                    : adminSidebar;
-          props.setPeople(sideBarMenu);
-          props.setAuth(true);
-          navigate(from, { replace: true });
-        })
-        .catch((error) => {
-          console.error('Error during login:', error);
-        })
-        .finally(() => {
-          setProgressVisible(false); // Hide progress bar when API response is received
-        });
-    },
-  });
+    const handleSave = async () => {
+        if (await validateForm()) {
+            try {
+                const response = await axios.post('YOUR_API_ENDPOINT', saveForm);
+                console.log("Form data saved:", response.data);
+                // Optionally, you can reset the form after saving
+                setSaveForm({
+                    firstName: '',
+                    lastName: '',
+                    email: '',
+                    role: []
+                });
+            } catch (error) {
+                console.error("Error:", error);
+                // Handle error, display message to user, etc.
+            }
+        }
+    };
 
+    const names = ['Admin', 'Manager', 'User'];
 
-  const { errors, touched, values, isSubmitting, handleSubmit, getFieldProps } = formik;
+    return (
+        <Box m="10px">
+            {/* HEADER */}
+            <Header title="EXTRA" />
 
-  return (
-    <FormikProvider value={formik}>
-      <Form autoComplete="off" noValidate onSubmit={handleSubmit}>
-        <Box
-          component={motion.div}
-          animate={{
-            transition: {
-              staggerChildren: 0.55,
-            },
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 3,
-            }}
-            component={motion.div}
-            initial={{ opacity: 0, y: 40 }}
-            animate={animate}
-          >
-            <TextField
-              fullWidth
-              autoComplete="username"
-              type="text"
-              label="Username"
-              {...getFieldProps("username")}
-              error={Boolean(touched.username && errors.username)}
-              helperText={touched.username && errors.username}
-            />
+            {/* ROW 2 */}
+            <Box
+                gridColumn="span 8"
+                gridRow="span 2"
+                backgroundColor={colors.primary[400]}
+            >
+                <FormControl fullWidth>
+                    <Grid container spacing={2}>
+                        <Grid item xs={4}>
+                            <TextField
+                                name='firstName'
+                                label="First Name"
+                                fullWidth
+                                size='small'
+                                color="secondary"
+                                variant="outlined"
+                                value={saveForm.firstName}
+                                onChange={handleChange}
+                                error={!!errors.firstName}
+                                helperText={errors.firstName}
+                            />
+                        </Grid>
+                        <Grid item xs={4}>
+                            <TextField
+                                name='lastName'
+                                label="Last Name"
+                                fullWidth
+                                size='small'
+                                color="secondary"
+                                variant="outlined"
+                                value={saveForm.lastName}
+                                onChange={handleChange}
+                                error={!!errors.lastName}
+                                helperText={errors.lastName}
+                            />
+                        </Grid>
+                        <Grid item xs={4}>
+                            <TextField
+                                name='email'
+                                label="Email"
+                                fullWidth
+                                size='small'
+                                color="secondary"
+                                variant="outlined"
+                                value={saveForm.email}
+                                onChange={handleChange}
+                                error={!!errors.email}
+                                helperText={errors.email}
+                            />
+                        </Grid>
+                    </Grid>
+                </FormControl>
+                <Box mt={2}>
+                    <Button variant="contained" color="primary" onClick={handleSave}>
+                        Save
+                    </Button>
+                </Box>
+            </Box>
 
-            <TextField
-              fullWidth
-              autoComplete="current-password"
-              type={showPassword ? "text" : "password"}
-              label="Password"
-              {...getFieldProps("password")}
-              error={Boolean(touched.password && errors.password)}
-              helperText={touched.password && errors.password}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword((prev) => !prev)}
+            {/* Tag Selector */}
+            <Box mt={2}>
+                <FormControl sx={{ m: 1, width: 300 }}>
+                    <InputLabel id="demo-multiple-checkbox-label">Tag</InputLabel>
+                    <Select
+                        labelId="demo-multiple-checkbox-label"
+                        id="demo-multiple-checkbox"
+                        multiple
+                        value={saveForm.role}
+                        onChange={handleTagChange}
+                        input={<OutlinedInput label="Tag" />}
+                        renderValue={(selected) => selected.join(', ')}
                     >
-                      {showPassword ? (
-                        <Icon icon="eva:eye-fill" />
-                      ) : (
-                        <Icon icon="eva:eye-off-fill" />
-                      )}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Box>
-
-          <Box
-            component={motion.div}
-            initial={{ opacity: 0, y: 20 }}
-            animate={animate}
-          >
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ my: 2 }}
-            >
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    {...getFieldProps("remember")}
-                    checked={values.remember}
-                  />
-                }
-                label="Remember me"
-              />
-
-              <Link
-                component={RouterLink}
-                variant="subtitle2"
-                to="#"
-                underline="hover"
-              >
-                Forgot password?
-              </Link>
-            </Stack>
-
-            <LoadingButton
-              fullWidth
-              size="large"
-              type="submit"
-              variant="contained"
-              loading={isSubmitting}
-            >
-              {isSubmitting ? "loading..." : "Login"}
-            </LoadingButton>
-
-            {progressVisible && <LinearProgress />} {/* Show progress bar if progressVisible state is true */}
-          </Box>
+                        {names.map((name) => (
+                            <MenuItem key={name} value={name}>
+                                <Checkbox checked={saveForm.role.indexOf(name) > -1} />
+                                <ListItemText primary={name} />
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+            </Box>
         </Box>
-      </Form>
-    </FormikProvider>
-  );
+    );
 };
 
-export default LoginForm;
+export default EXTRA;
