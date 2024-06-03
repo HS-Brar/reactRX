@@ -1,54 +1,54 @@
-import React, { useState, useRef } from 'react';
-import { Box, Button, TextField } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 
 const Extra = () => {
-  const [fileName, setFileName] = useState('');
-  const fileInputRef = useRef(null);
+  const [data, setData] = useState({
+    "Acc": "qq",
+    "Assd": "qqww",
+    "Adsds": "eeee",
+    "Adsdsd": "acffffnds",
+    "asdasdc": "acddddnds",
+    "sdas": "adsd",
+    "sddsf": "asdsad",
+    "Acdassssdas": "asdas",
+    "fff": "asdsa",
+    "sfssd": "dsff",
+    "xZX": "dsfff",
+    "sfrs": "asdsd"
+  });
+  const [showAllRows, setShowAllRows] = useState(false);
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    setFileName(selectedFile.name);
-  };
-
-  const handleFileButtonClick = () => {
-    fileInputRef.current.click();
-  };
-
-  const handleUpload = () => {
-    const file = fileInputRef.current.files[0];
-    if (file) {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      fetch('your-backend-url', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => {
-        if (response.ok) {
-          console.log('File uploaded successfully');
-          // Optionally, handle any further actions after successful upload
-        } else {
-          console.error('Failed to upload file');
-        }
-      })
-      .catch(error => {
-        console.error('Error uploading file:', error);
-      });
-    }
+  const handleToggleShowAllRows = () => {
+    setShowAllRows(!showAllRows);
   };
 
   return (
     <Box sx={{ width: '100%', padding: 2 }}>
-      <input type="file" onChange={handleFileChange} style={{ display: 'none' }} ref={fileInputRef} accept=".xls,.xlsx" />
-      <TextField
-        value={fileName}
-        label="Choose File"
-        fullWidth
-        onClick={handleFileButtonClick}
-        InputProps={{ readOnly: true, style: { cursor: 'pointer' } }}
-      />
-      <Button onClick={handleUpload} variant="contained" color="primary">Upload</Button>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Value</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {Object.entries(data).slice(0, showAllRows ? undefined : 5).map(([key, value]) => (
+              <TableRow key={key}>
+                <TableCell>{key}</TableCell>
+                {/* Editable cell for the value */}
+                <TableCell>
+                  <input type="text" defaultValue={value} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      {/* Button to toggle showing all rows */}
+      <Button onClick={handleToggleShowAllRows}>
+        {showAllRows ? 'Show Less' : 'Show More'}
+      </Button>
     </Box>
   );
 };
