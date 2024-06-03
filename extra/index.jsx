@@ -8,30 +8,33 @@ import {
   TableHead,
   TableRow,
   Paper,
-  TextField,
   Button,
 } from '@mui/material';
 
 const Extra = () => {
-  const [saveForm, setSaveForm] = useState({});
-  const data = {
+  const [data, setData] = useState({
     networkList: [
       { "net 1": "net1" },
       { "net 2": "net2" },
       { "net 3": "net3" },
     ],
-  };
+  });
 
-  const handleInputChange = (event, networkName) => {
+  const handleInputChange = (event, index) => {
     const { value } = event.target;
-    setSaveForm((prevSaveForm) => ({
-      ...prevSaveForm,
-      [networkName]: value,
-    }));
+    const updatedNetworkList = data.networkList.map((network, i) => {
+      if (i === index) {
+        const networkName = Object.keys(network)[0];
+        return { [networkName]: value };
+      }
+      return network;
+    });
+
+    setData({ networkList: updatedNetworkList });
   };
 
   const handleSave = () => {
-    console.log(saveForm);
+    console.log(data.networkList);
   };
 
   return (
@@ -54,9 +57,10 @@ const Extra = () => {
                     {networkName}
                   </TableCell>
                   <TableCell>
-                    <TextField
-                      value={saveForm[networkName] || networkID}
-                      onChange={(event) => handleInputChange(event, networkName)}
+                    <input
+                      type="text"
+                      value={networkID}
+                      onChange={(event) => handleInputChange(event, index)}
                     />
                   </TableCell>
                 </TableRow>
