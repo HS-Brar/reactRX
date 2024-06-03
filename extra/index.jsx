@@ -14,9 +14,9 @@ import {
 const Extra = () => {
   const [data, setData] = useState({
     networkList: [
-      { "net 1": "net1" },
-      { "net 2": "net2" },
-      { "net 3": "net3" },
+      { 0: "net 1", 1: "net1" },
+      { 0: "net 2", 1: "net2" },
+      { 0: "net 3", 1: "net3" },
     ],
   });
 
@@ -24,8 +24,7 @@ const Extra = () => {
     const { value } = event.target;
     const updatedNetworkList = data.networkList.map((network, i) => {
       if (i === index) {
-        const networkName = Object.keys(network)[0];
-        return { [networkName]: value };
+        return { ...network, 1: value };
       }
       return network;
     });
@@ -48,24 +47,20 @@ const Extra = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.networkList.map((network, index) => {
-              const networkName = Object.keys(network)[0];
-              const networkID = network[networkName];
-              return (
-                <TableRow key={index}>
-                  <TableCell component="th" scope="row">
-                    {networkName}
-                  </TableCell>
-                  <TableCell>
-                    <input
-                      type="text"
-                      value={networkID}
-                      onChange={(event) => handleInputChange(event, index)}
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {data.networkList.map((network, index) => (
+              <TableRow key={index}>
+                <TableCell component="th" scope="row">
+                  {network[0]}
+                </TableCell>
+                <TableCell>
+                  <input
+                    type="text"
+                    value={network[1]}
+                    onChange={(event) => handleInputChange(event, index)}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
