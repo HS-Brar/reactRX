@@ -1,247 +1,62 @@
-import React, { useState, useEffect } from "react";
-import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
-import { Form, FormikProvider, useFormik } from "formik";
-import * as Yup from "yup";
-import { regSidebar, pharSidebar, docSidebar, adminSidebar } from "../data/demoData";
-import {
-  Box,
-  Checkbox,
-  FormControlLabel,
-  IconButton,
-  InputAdornment,
-  Link,
-  Stack,
-  TextField,
-} from "@mui/material";
-import { LoadingButton } from "@mui/lab";
-import { Icon } from "@iconify/react";
-import { motion } from "framer-motion";
+import React, { useState } from 'react';
+import { Box, Button, Typography, CircularProgress } from '@mui/material';
 
-let easing = [0.6, -0.05, 0.01, 0.99];
-const animate = {
-  opacity: 1,
-  y: 0,
-  transition: {
-    duration: 0.6,
-    ease: easing,
-    delay: 0.16,
-  },
-};
+const Extra = () => {
+  const [progress, setProgress] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-const LoginForm = (props) => {
-  const { entityRID } = props;
-  const [jwtToken, setJwtToken] = useState("");
-  const [captcha, setCaptcha] = useState("");
-  const [captchaInput, setCaptchaInput] = useState("");
-  const navigate = useNavigate();
-  const location = useLocation();
-  const from = location.state?.from?.pathname || "/";
-  const [showPassword, setShowPassword] = useState(false);
-
-  useEffect(() => {
-    setCaptcha(generateCaptcha());
-  }, []);
-
-  const generateCaptcha = () => {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let captcha = '';
-    for (let i = 0; i < 6; i++) {
-      captcha += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    return captcha;
+  const mockApiResponse = () => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const nextProgress = Math.min(progress + Math.floor(Math.random() * 30), 100);
+        resolve({
+          processId: 1,
+          message: `${nextProgress}% completed`,
+        });
+      }, 1000);
+    });
   };
 
-  const LoginSchema = Yup.object().shape({
-    username: Yup.string().required("Username is required"),
-    password: Yup.string().required("Password is required"),
-    captchaInput: Yup.string()
-      .required("CAPTCHA is required")
-      .oneOf([captcha], "CAPTCHA does not match"),
-  });
+  const checkProgress = async () => {
+    try {
+      const response = await mockApiResponse();
+      const { message } = response;
+      const percentage = parseInt(message.split('%')[0]);
 
-  const formik = useFormik({
-    initialValues: {
-      username: "",
-      password: "",
-      entityRID: "",
-      captchaInput: "",
-    },
-    validationSchema: LoginSchema,
-    onSubmit: async (values) => {
-      values.entityRID = entityRID;
+      setProgress(percentage);
 
-      fetch('http://10.197.8.17:2023/hmis/api/v1/authentication/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(values),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            return response.json().then(errorData => {
-              const errorMessage = `Network response was not ok. Status: ${response.status}, Message: ${errorData.message}`;
-              throw new Error(errorMessage);
-            });
-          }
-          return response.json();
-        })
-        .then((data) => {
-          setJwtToken(data.accessToken);
-          localStorage.setItem("jwtToken", data.accessToken);
-          localStorage.setItem("userFullName", data.userFullName);
-          localStorage.setItem("entityName", data.entityName);
-          localStorage.setItem("userType", data.userType);
+      if (percentage < 100) {
+        setTimeout(checkProgress, 1000); // Retry after 1 second
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error fetching progress:', error);
+      setLoading(false);
+    }
+  };
 
-          const sideBarMenu =
-            data.userType === "Pharmacy User" ? pharSidebar
-              : data.userType === 'Registration User' ? regSidebar
-                : data.userType === "Doctor" ? docSidebar
-                  : data.userType === "Admin" ? adminSidebar
-                    : adminSidebar;
-          props.setPeople(sideBarMenu);
-          props.setAuth(true);
-          navigate(from, { replace: true });
-        })
-        .catch((error) => {
-          console.error('Error during login:', error);
-        });
-    },
-  });
-
-  const { errors, touched, values, isSubmitting, handleSubmit, getFieldProps } = formik;
+  const handleClick = () => {
+    setLoading(true);
+    setProgress(0);
+    checkProgress();
+  };
 
   return (
-    <FormikProvider value={formik}>
-      <Form autoComplete="off" noValidate onSubmit={handleSubmit}>
-        <Box
-          component={motion.div}
-          animate={{
-            transition: {
-              staggerChildren: 0.55,
-            },
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 3,
-            }}
-            component={motion.div}
-            initial={{ opacity: 0, y: 40 }}
-            animate={animate}
-          >
-            <TextField
-              fullWidth
-              autoComplete="username"
-              type="text"
-              label="Username"
-              {...getFieldProps("username")}
-              error={Boolean(touched.username && errors.username)}
-              helperText={touched.username && errors.username}
-            />
-
-            <TextField
-              fullWidth
-              autoComplete="current-password"
-              type={showPassword ? "text" : "password"}
-              label="Password"
-              {...getFieldProps("password")}
-              error={Boolean(touched.password && errors.password)}
-              helperText={touched.password && errors.password}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword((prev) => !prev)}
-                    >
-                      {showPassword ? (
-                        <Icon icon="eva:eye-fill" />
-                      ) : (
-                        <Icon icon="eva:eye-off-fill" />
-                      )}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                mt: 3,
-              }}
-            >
-              <Box
-                sx={{
-                  padding: "10px",
-                  border: "1px solid #ccc",
-                  backgroundColor: "#f5f5f5",
-                  fontFamily: "monospace",
-                  fontSize: "20px",
-                  letterSpacing: "2px",
-                }}
-              >
-                {captcha}
-              </Box>
-              <TextField
-                fullWidth
-                label="Enter CAPTCHA"
-                {...getFieldProps("captchaInput")}
-                error={Boolean(touched.captchaInput && errors.captchaInput)}
-                helperText={touched.captchaInput && errors.captchaInput}
-              />
-            </Box>
-          </Box>
-
-          <Box
-            component={motion.div}
-            initial={{ opacity: 0, y: 20 }}
-            animate={animate}
-          >
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ my: 2 }}
-            >
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    {...getFieldProps("remember")}
-                    checked={values.remember}
-                  />
-                }
-                label="Remember me"
-              />
-
-              <Link
-                component={RouterLink}
-                variant="subtitle2"
-                to="#"
-                underline="hover"
-              >
-                Forgot password?
-              </Link>
-            </Stack>
-
-            <LoadingButton
-              fullWidth
-              size="large"
-              type="submit"
-              variant="contained"
-              loading={isSubmitting}
-            >
-              {isSubmitting ? "Loading..." : "Login"}
-            </LoadingButton>
-          </Box>
+    <Box sx={{ width: '100%', padding: 2, textAlign: 'center' }}>
+      <Button variant="contained" color="primary" onClick={handleClick} disabled={loading}>
+        Start Process
+      </Button>
+      {loading && (
+        <Box sx={{ mt: 2 }}>
+          <CircularProgress variant="determinate" value={progress} />
+          <Typography variant="body1" sx={{ mt: 1 }}>
+            {progress}% completed
+          </Typography>
         </Box>
-      </Form>
-    </FormikProvider>
+      )}
+    </Box>
   );
 };
 
-export default LoginForm;
+export default Extra;
