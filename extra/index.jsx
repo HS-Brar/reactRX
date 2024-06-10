@@ -1,60 +1,83 @@
-import React, { useState } from 'react';
-import { Box, Button, Typography, CircularProgress } from '@mui/material';
+import React, { useRef } from 'react';
+import { Box, TextField, Button } from '@mui/material';
 
 const Extra = () => {
-  const [progress, setProgress] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
+  const [selectedFileName, setSelectedFileName] = React.useState('');
+  const [selectedFile, setSelectedFile] = React.useState(null);
 
-  const mockApiResponse = () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const nextProgress = Math.min(progress + Math.floor(Math.random() * 30), 100);
-        resolve({
-          processId: 1,
-          message: `${nextProgress}% completed`,
-        });
-      }, 1000);
-    });
-  };
-
-  const checkProgress = async () => {
-    try {
-      const response = await mockApiResponse();
-      const { message } = response;
-      const percentage = parseInt(message.split('%')[0]);
-
-      setProgress(percentage);
-
-      if (percentage < 100) {
-        setTimeout(checkProgress, 1000); // Retry after 1 second
+  const handleFileInputChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const fileNameParts = file.name.split('.');
+      const fileExtension = fileNameParts[fileNameParts.length - 1];
+      if (fileExtension === 'xls' || fileExtension === 'xlsx') {
+        setSelectedFileName(file.name);
+        setSelectedFile(file); // Store the selected file
       } else {
-        setLoading(false);
+        setSelectedFileName(''); // Clear the selected file name if it's not the correct format
+        setSelectedFile(null); // Clear the selected file
+        alert('Please select a .xls or .xlsx file.');
       }
-    } catch (error) {
-      console.error('Error fetching progress:', error);
-      setLoading(false);
     }
   };
 
-  const handleClick = () => {
-    setLoading(true);
-    setProgress(0);
-    checkProgress();
+  const handleTextFieldClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const uploadFile = async () => {
+    if (!selectedFile) {
+      alert('No file selected.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const response = await fetch('YOUR_BACKEND_API_ENDPOINT', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('File uploaded successfully:', result);
+        // Handle success response
+      } else {
+        console.error('File upload failed:', response.statusText);
+        // Handle error response
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      // Handle error
+    }
   };
 
   return (
-    <Box sx={{ width: '100%', padding: 2, textAlign: 'center' }}>
-      <Button variant="contained" color="primary" onClick={handleClick} disabled={loading}>
-        Start Process
+    <Box>
+      <TextField
+        label="Click Here"
+        value={selectedFileName}
+        onClick={handleTextFieldClick}
+        InputProps={{ readOnly: true }}
+      />
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: 'none' }}
+        accept=".xls,.xlsx"
+        onChange={handleFileInputChange}
+      />
+      <Button 
+        variant="contained" 
+        onClick={uploadFile}
+        disabled={!selectedFile} // Disable button if no file is selected
+        sx={{ marginTop: 2 }}
+      >
+        Upload
       </Button>
-      {loading && (
-        <Box sx={{ mt: 2 }}>
-          <CircularProgress variant="determinate" value={progress} />
-          <Typography variant="body1" sx={{ mt: 1 }}>
-            {progress}% completed
-          </Typography>
-        </Box>
-      )}
     </Box>
   );
 };
