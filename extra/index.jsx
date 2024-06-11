@@ -1,83 +1,44 @@
-import React, { useRef } from 'react';
-import { Box, TextField, Button } from '@mui/material';
+import React from 'react';
+import { Box } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import { styled } from '@mui/system';
+
+const StyledDataGrid = styled(DataGrid)(({ theme }) => ({
+  '& .MuiDataGrid-columnHeaders': {
+    background: 'linear-gradient(to right, #FF612B, #FFCC80)', // Lighter shades
+    color: 'black', // Text color for better visibility
+  },
+}));
 
 const Extra = () => {
-  const fileInputRef = useRef(null);
-  const [selectedFileName, setSelectedFileName] = React.useState('');
-  const [selectedFile, setSelectedFile] = React.useState(null);
+  // Dummy data for users
+  const rows = [
+    { id: 1, username: 'johndoe', email: 'john@example.com', age: 25 },
+    { id: 2, username: 'janedoe', email: 'jane@example.com', age: 30 },
+    { id: 3, username: 'bobsmith', email: 'bob@example.com', age: 22 },
+    { id: 4, username: 'alicejohnson', email: 'alice@example.com', age: 27 },
+    { id: 5, username: 'mikebrown', email: 'mike@example.com', age: 35 },
+  ];
 
-  const handleFileInputChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const fileNameParts = file.name.split('.');
-      const fileExtension = fileNameParts[fileNameParts.length - 1];
-      if (fileExtension === 'xls' || fileExtension === 'xlsx') {
-        setSelectedFileName(file.name);
-        setSelectedFile(file); // Store the selected file
-      } else {
-        setSelectedFileName(''); // Clear the selected file name if it's not the correct format
-        setSelectedFile(null); // Clear the selected file
-        alert('Please select a .xls or .xlsx file.');
-      }
-    }
-  };
-
-  const handleTextFieldClick = () => {
-    fileInputRef.current.click();
-  };
-
-  const uploadFile = async () => {
-    if (!selectedFile) {
-      alert('No file selected.');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
-    try {
-      const response = await fetch('YOUR_BACKEND_API_ENDPOINT', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('File uploaded successfully:', result);
-        // Handle success response
-      } else {
-        console.error('File upload failed:', response.statusText);
-        // Handle error response
-      }
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      // Handle error
-    }
-  };
+  // Column definitions for the DataGrid
+  const columns = [
+    { field: 'id', headerName: 'ID', width: 90 },
+    { field: 'username', headerName: 'Username', width: 150 },
+    { field: 'email', headerName: 'Email', width: 200 },
+    { field: 'age', headerName: 'Age', type: 'number', width: 110 },
+  ];
 
   return (
-    <Box>
-      <TextField
-        label="Click Here"
-        value={selectedFileName}
-        onClick={handleTextFieldClick}
-        InputProps={{ readOnly: true }}
+    <Box sx={{ height: 400, width: '100%' }}>
+      <StyledDataGrid
+        rows={rows}
+        columns={columns}
+        pageSize={5}
+        rowsPerPageOptions={[5]}
+        checkboxSelection
+        disableSelectionOnClick
+        rowHeight={40} // Adjust the row height here
       />
-      <input
-        type="file"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        accept=".xls,.xlsx"
-        onChange={handleFileInputChange}
-      />
-      <Button 
-        variant="contained" 
-        onClick={uploadFile}
-        disabled={!selectedFile} // Disable button if no file is selected
-        sx={{ marginTop: 2 }}
-      >
-        Upload
-      </Button>
     </Box>
   );
 };
