@@ -1,74 +1,147 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Button } from '@mui/material';
-import { LocalizationProvider, DesktopDatePicker } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';  // Import AdapterDayjs correctly
-import dayjs from 'dayjs';  // Import dayjs for date manipulation
+import { Box, Typography, TextField, Button, Alert } from '@mui/material';
+import dayjs from 'dayjs';
 
 const Extra = () => {
-  const [checkInDate, setCheckInDate] = useState(null);
-  const [checkOutDate, setCheckOutDate] = useState(null);
+  const [searchForm, setSearchForm] = useState({
+    userName: '',
+    fromDate: null,
+    toDate: null,
+  });
+  const [userNameError, setUserNameError] = useState('');
+  const [fromDateError, setFromDateError] = useState('');
+  const [toDateError, setToDateError] = useState('');
+  const [searchResult, setSearchResult] = useState(null);
+  const [error, setError] = useState(null);
 
-  const handleCheckInDateChange = (date) => {
-    setCheckInDate(date);
+  const isValidDate = (date) => {
+    return dayjs(date, ['YYYY-MM-DD', 'MM/DD/YYYY'], true).isValid();
   };
 
-  const handleCheckOutDateChange = (date) => {
-    setCheckOutDate(date);
-  };
-
-  const handleReset = () => {
-    setCheckInDate(null);
-    setCheckOutDate(null);
-  };
-
-  const handleBook = () => {
-    // Example action on book button click
-    if (checkInDate && checkOutDate) {
-      const nights = dayjs(checkOutDate).diff(checkInDate, 'day');
-      alert(`Booking confirmed for ${nights} nights from ${dayjs(checkInDate).format('MM/DD/YYYY')} to ${dayjs(checkOutDate).format('MM/DD/YYYY')}`);
+  const handleFromDateChange = (e) => {
+    const date = e.target.value;
+    if (isValidDate(date)) {
+      setSearchForm({ ...searchForm, fromDate: date });
+      setFromDateError('');
     } else {
-      alert('Please select both check-in and check-out dates.');
+      setFromDateError('Invalid date format for From Date.');
+    }
+  };
+
+  const handleToDateChange = (e) => {
+    const date = e.target.value;
+    if (isValidDate(date)) {
+      setSearchForm({ ...searchForm, toDate: date });
+      setToDateError('');
+    } else {
+      setToDateError('Invalid date format for To Date.');
+    }
+  };
+
+  const handleSearch = async () => {
+    const { userName, fromDate, toDate } = searchForm;
+
+    if (!userName.trim()) {
+      setUserNameError('Please fill in the Username field.');
+      setFromDateError(''); // Reset other error states
+      setToDateError('');
+      return; // Exit early if username is empty
+    } else {
+      setUserNameError('');
+    }
+
+    // Validate dates only if they are provided
+    if (fromDate && !isValidDate(fromDate)) {
+      setFromDateError('Invalid date format for From Date.');
+      return; // Exit early if fromDate is invalid
+    } else {
+      setFromDateError('');
+    }
+
+    if (toDate && !isValidDate(toDate)) {
+      setToDateError('Invalid date format for To Date.');
+      return; // Exit early if toDate is invalid
+    } else {
+      setToDateError('');
+    }
+
+    try {
+      const response = await fetch('your-api-endpoint', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userName,
+          fromDate,
+          toDate,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      setSearchResult(data);
+      setError(null);
+      console.log('Search result:', data);
+    } catch (error) {
+      setError('Error performing search. Please try again.');
+      console.error('Error:', error);
     }
   };
 
   return (
     <Box sx={{ maxWidth: 600, margin: 'auto', padding: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Hotel Booking: Check-in and Check-out Dates
+      <Typography variant="h4" gutterBottom>
+        Search Form
       </Typography>
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <DesktopDatePicker
-          label="Check-in Date"
-          inputFormat="MM/dd/yyyy"
-          value={checkInDate}
-          onChange={handleCheckInDateChange}
-          renderInput={(params) => <TextField {...params} />}
-          sx={{ marginBottom: 2 }}
-        />
-        <DesktopDatePicker
-          label="Check-out Date"
-          inputFormat="MM/dd/yyyy"
-          value={checkOutDate}
-          onChange={handleCheckOutDateChange}
-          renderInput={(params) => <TextField {...params} />}
-          minDate={checkInDate}  // Ensure check-out date cannot be before check-in date
-          sx={{ marginBottom: 2 }}
-        />
-      </LocalizationProvider>
+      {error && <Alert severity="error">{error}</Alert>}
+      <TextField
+        label="Username"
+        fullWidth
+        margin="normal"
+        value={searchForm.userName}
+        onChange={(e) => setSearchForm({ ...searchForm, userName: e.target.value })}
+        error={!!userNameError}
+        helperText={userNameError}
+      />
+      <TextField
+        type="date"
+        label="From Date"
+        fullWidth
+        margin="normal"
+        value={searchForm.fromDate || ''}
+        onChange={handleFromDateChange}
+        InputLabelProps={{
+          shrink: true,
+        }}
+        error={!!fromDateError}
+        helperText={fromDateError}
+      />
+      <TextField
+        type="date"
+        label="To Date"
+        fullWidth
+        margin="normal"
+        value={searchForm.toDate || ''}
+        onChange={handleToDateChange}
+        InputLabelProps={{
+          shrink: true,
+        }}
+        error={!!toDateError}
+        helperText={toDateError}
+      />
+      <Button variant="contained" color="primary" onClick={handleSearch}>
+        Search
+      </Button>
 
-      <Box sx={{ marginTop: 2 }}>
-        <Button variant="contained" color="primary" onClick={handleBook} disabled={!checkInDate || !checkOutDate || dayjs(checkOutDate).diff(checkInDate, 'day') <= 0}>
-          Book
-        </Button>
-        <Button variant="outlined" color="secondary" onClick={handleReset} sx={{ marginLeft: 2 }}>
-          Reset
-        </Button>
-      </Box>
-
-      {checkInDate && checkOutDate && (
-        <Typography variant="body2" sx={{ marginTop: 2 }}>
-          Selected dates: {dayjs(checkInDate).format('MM/DD/YYYY')} - {dayjs(checkOutDate).format('MM/DD/YYYY')}
-        </Typography>
+      {searchResult && (
+        <Box mt={2}>
+          <Typography variant="h5">Search Result</Typography>
+          {/* Display your search result data here */}
+        </Box>
       )}
     </Box>
   );
