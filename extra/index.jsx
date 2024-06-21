@@ -8,62 +8,69 @@ const Extra = () => {
     fromDate: null,
     toDate: null,
   });
-  const [userNameError, setUserNameError] = useState('');
-  const [fromDateError, setFromDateError] = useState('');
-  const [toDateError, setToDateError] = useState('');
+  const [error, setError] = useState({
+    userName: '',
+    fromDate: '',
+    toDate: '',
+    api: '',
+  });
   const [searchResult, setSearchResult] = useState(null);
-  const [error, setError] = useState(null);
 
   const isValidDate = (date) => {
     return dayjs(date, ['YYYY-MM-DD', 'MM/DD/YYYY'], true).isValid();
   };
 
-  const handleFromDateChange = (e) => {
-    const date = e.target.value;
-    if (isValidDate(date)) {
-      setSearchForm({ ...searchForm, fromDate: date });
-      setFromDateError('');
-    } else {
-      setFromDateError('Invalid date format for From Date.');
-    }
-  };
+  const validateForm = () => {
+    let isValid = true;
 
-  const handleToDateChange = (e) => {
-    const date = e.target.value;
-    if (isValidDate(date)) {
-      setSearchForm({ ...searchForm, toDate: date });
-      setToDateError('');
+    if (!searchForm.userName.trim()) {
+      setError((prevError) => ({
+        ...prevError,
+        userName: 'Please fill in the Username field.',
+      }));
+      isValid = false;
     } else {
-      setToDateError('Invalid date format for To Date.');
+      setError((prevError) => ({
+        ...prevError,
+        userName: '',
+      }));
     }
+
+    if (searchForm.fromDate && !isValidDate(searchForm.fromDate)) {
+      setError((prevError) => ({
+        ...prevError,
+        fromDate: 'Invalid date format for From Date.',
+      }));
+      isValid = false;
+    } else {
+      setError((prevError) => ({
+        ...prevError,
+        fromDate: '',
+      }));
+    }
+
+    if (searchForm.toDate && !isValidDate(searchForm.toDate)) {
+      setError((prevError) => ({
+        ...prevError,
+        toDate: 'Invalid date format for To Date.',
+      }));
+      isValid = false;
+    } else {
+      setError((prevError) => ({
+        ...prevError,
+        toDate: '',
+      }));
+    }
+
+    return isValid;
   };
 
   const handleSearch = async () => {
+    if (!validateForm()) {
+      return; // Exit early if form validation fails
+    }
+
     const { userName, fromDate, toDate } = searchForm;
-
-    if (!userName.trim()) {
-      setUserNameError('Please fill in the Username field.');
-      setFromDateError(''); // Reset other error states
-      setToDateError('');
-      return; // Exit early if username is empty
-    } else {
-      setUserNameError('');
-    }
-
-    // Validate dates only if they are provided
-    if (fromDate && !isValidDate(fromDate)) {
-      setFromDateError('Invalid date format for From Date.');
-      return; // Exit early if fromDate is invalid
-    } else {
-      setFromDateError('');
-    }
-
-    if (toDate && !isValidDate(toDate)) {
-      setToDateError('Invalid date format for To Date.');
-      return; // Exit early if toDate is invalid
-    } else {
-      setToDateError('');
-    }
 
     try {
       const response = await fetch('your-api-endpoint', {
@@ -84,10 +91,16 @@ const Extra = () => {
 
       const data = await response.json();
       setSearchResult(data);
-      setError(null);
+      setError((prevError) => ({
+        ...prevError,
+        api: '',
+      }));
       console.log('Search result:', data);
     } catch (error) {
-      setError('Error performing search. Please try again.');
+      setError((prevError) => ({
+        ...prevError,
+        api: 'Error performing search. Please try again.',
+      }));
       console.error('Error:', error);
     }
   };
@@ -97,15 +110,15 @@ const Extra = () => {
       <Typography variant="h4" gutterBottom>
         Search Form
       </Typography>
-      {error && <Alert severity="error">{error}</Alert>}
+      {error.api && <Alert severity="error">{error.api}</Alert>}
       <TextField
         label="Username"
         fullWidth
         margin="normal"
         value={searchForm.userName}
         onChange={(e) => setSearchForm({ ...searchForm, userName: e.target.value })}
-        error={!!userNameError}
-        helperText={userNameError}
+        error={!!error.userName}
+        helperText={error.userName}
       />
       <TextField
         type="date"
@@ -113,12 +126,12 @@ const Extra = () => {
         fullWidth
         margin="normal"
         value={searchForm.fromDate || ''}
-        onChange={handleFromDateChange}
+        onChange={(e) => setSearchForm({ ...searchForm, fromDate: e.target.value })}
         InputLabelProps={{
           shrink: true,
         }}
-        error={!!fromDateError}
-        helperText={fromDateError}
+        error={!!error.fromDate}
+        helperText={error.fromDate}
       />
       <TextField
         type="date"
@@ -126,12 +139,12 @@ const Extra = () => {
         fullWidth
         margin="normal"
         value={searchForm.toDate || ''}
-        onChange={handleToDateChange}
+        onChange={(e) => setSearchForm({ ...searchForm, toDate: e.target.value })}
         InputLabelProps={{
           shrink: true,
         }}
-        error={!!toDateError}
-        helperText={toDateError}
+        error={!!error.toDate}
+        helperText={error.toDate}
       />
       <Button variant="contained" color="primary" onClick={handleSearch}>
         Search
