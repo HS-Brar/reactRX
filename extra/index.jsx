@@ -1,163 +1,141 @@
-import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, Alert } from '@mui/material';
-import dayjs from 'dayjs';
+import { useState } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import Topbar from "./arena/global/Topbar";
+import { Sidebar } from "./arena/global/Sidebar";
+import Dashboard from "./arena/dashboard";
+import Team from "./arena/team";
+import Invoices from "./arena/invoices";
+import Contacts from "./arena/contacts";
+import Bar from "./arena/bar";
+import Form from "./arena/form";
+import Line from "./arena/line";
+import Pie from "./arena/pie";
+import FAQ from "./arena/faq";
+import OpVisit from "./arena/Registration/OpVisit";
+import ErAdmission from "./arena/Registration/erAdmission";
+import BILLING from "./arena/Billing";
+import MEDICATIONDISPENSE from "./arena/pharmacy/medicationDispense";
+import MEDICATIONRETURN from "./arena/pharmacy/medicationReturn";
+import INVENTORY from "./arena/pharmacy/inventory";
+import MEDICALRECORDS from "./arena/doctor/medicalRecords";
+import MYPATIENTS from "./arena/doctor/myPatients";
+import Geography from "./arena/geography";
+import { CssBaseline, ThemeProvider } from "@mui/material";
+import { ColorModeContext, useMode } from "./theme";
+import Login from "./arena/auth/Login";
+import Signup from "./arena/auth/Signup";
+import OpManagment from "./arena/Registration/OpManagment";
+import Emr from "./arena/doctor/EMR";
+import ADMIN from "./arena/admin";
+import MANAGESTOCK from "./arena/pharmacy/inventory/manageStock";
+import OPENINGSTOCK from "./arena/pharmacy/inventory/openingStock";
+import IPD from "./arena/ipd";
+import IP from "./arena/ip";
+import INCOMING from "./arena/incoming";
+import BEDVIEW from "./arena/bedView";
+import HOSPITALPRICEMASTER from "./arena/hospitalPriceMaster";
+import SERVICEMASTER from "./arena/serviceMaster";
+import STAFFMASTER from "./arena/StaffMaster";
+import ADDSTAFF from "./arena/StaffMaster/addStaff";
+import MANAGESTAFF from "./arena/StaffMaster/manageStaff";
+import ROLEMASTER from "./arena/roleMaster";
+import DIAGNOSIS from "./arena/bedView/diagnosis";
+import EXTRA from "./arena/extra";
+import Extra1 from "./arena/extra1";
+import InactivityTimeout from "./components/InactivityTimeout";
 
-const Extra = () => {
-  const [searchForm, setSearchForm] = useState({
-    userName: '',
-    fromDate: null,
-    toDate: null,
-  });
-  const [error, setError] = useState({
-    userName: '',
-    fromDate: '',
-    toDate: '',
-    api: '',
-  });
-  const [searchResult, setSearchResult] = useState(null);
+function App() {
+  const [auth, setAuth] = useState(false);
+  const location = useLocation();
+  const [theme, colorMode] = useMode();
+  const [isSidebar, setIsSidebar] = useState(true);
 
-  const isValidDate = (date) => {
-    return dayjs(date, ['YYYY-MM-DD', 'MM/DD/YYYY'], true).isValid();
+  const [showInactivityAlert, setShowInactivityAlert] = useState(false);
+  const handleInactivityTimeout = () => {
+    setShowInactivityAlert(true);
   };
-
-  const validateForm = () => {
-    let isValid = true;
-
-    if (!searchForm.userName.trim()) {
-      setError((prevError) => ({
-        ...prevError,
-        userName: 'Please fill in the Username field.',
-      }));
-      isValid = false;
-    } else {
-      setError((prevError) => ({
-        ...prevError,
-        userName: '',
-      }));
-    }
-
-    if (searchForm.fromDate && !isValidDate(searchForm.fromDate)) {
-      setError((prevError) => ({
-        ...prevError,
-        fromDate: 'Invalid date format for From Date.',
-      }));
-      isValid = false;
-    } else {
-      setError((prevError) => ({
-        ...prevError,
-        fromDate: '',
-      }));
-    }
-
-    if (searchForm.toDate && !isValidDate(searchForm.toDate)) {
-      setError((prevError) => ({
-        ...prevError,
-        toDate: 'Invalid date format for To Date.',
-      }));
-      isValid = false;
-    } else {
-      setError((prevError) => ({
-        ...prevError,
-        toDate: '',
-      }));
-    }
-
-    return isValid;
+   // Function to reset inactivity timer
+   const resetInactivityTimer = () => {
+    setShowInactivityAlert(false);
   };
-
-  const handleSearch = async () => {
-    if (!validateForm()) {
-      return; // Exit early if form validation fails
-    }
-
-    const { userName, fromDate, toDate } = searchForm;
-
-    try {
-      const response = await fetch('your-api-endpoint', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userName,
-          fromDate,
-          toDate,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
-      const data = await response.json();
-      setSearchResult(data);
-      setError((prevError) => ({
-        ...prevError,
-        api: '',
-      }));
-      console.log('Search result:', data);
-    } catch (error) {
-      setError((prevError) => ({
-        ...prevError,
-        api: 'Error performing search. Please try again.',
-      }));
-      console.error('Error:', error);
-    }
+  const [people, setPeople] = useState(null);
+  const handleSetPeople = (data) => {
+    setPeople(data);
   };
 
   return (
-    <Box sx={{ maxWidth: 600, margin: 'auto', padding: 2 }}>
-      <Typography variant="h4" gutterBottom>
-        Search Form
-      </Typography>
-      {error.api && <Alert severity="error">{error.api}</Alert>}
-      <TextField
-        label="Username"
-        fullWidth
-        margin="normal"
-        value={searchForm.userName}
-        onChange={(e) => setSearchForm({ ...searchForm, userName: e.target.value })}
-        error={!!error.userName}
-        helperText={error.userName}
-      />
-      <TextField
-        type="date"
-        label="From Date"
-        fullWidth
-        margin="normal"
-        value={searchForm.fromDate || ''}
-        onChange={(e) => setSearchForm({ ...searchForm, fromDate: e.target.value })}
-        InputLabelProps={{
-          shrink: true,
-        }}
-        error={!!error.fromDate}
-        helperText={error.fromDate}
-      />
-      <TextField
-        type="date"
-        label="To Date"
-        fullWidth
-        margin="normal"
-        value={searchForm.toDate || ''}
-        onChange={(e) => setSearchForm({ ...searchForm, toDate: e.target.value })}
-        InputLabelProps={{
-          shrink: true,
-        }}
-        error={!!error.toDate}
-        helperText={error.toDate}
-      />
-      <Button variant="contained" color="primary" onClick={handleSearch}>
-        Search
-      </Button>
+    <Routes>
+      <Route path="/login" element={<Login setAuth={setAuth} setPeople={handleSetPeople} />} />
+      <Route path="/signup" element={<Signup setAuth={setAuth} />} />
+      <Route
+        path="*"
+        element={
+          auth ? (
 
-      {searchResult && (
-        <Box mt={2}>
-          <Typography variant="h5">Search Result</Typography>
-          {/* Display your search result data here */}
-        </Box>
-      )}
-    </Box>
+            <ColorModeContext.Provider value={colorMode}>
+              <ThemeProvider theme={theme}>
+                <CssBaseline />
+                <div className="app">
+                  <Sidebar people={people} isSidebar={isSidebar} />
+                  <main className="content">
+                    <Topbar setIsSidebar={setIsSidebar} />
+                    <InactivityTimeout onTimeout={handleInactivityTimeout} />
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/team" element={<Team />} />
+                      <Route path="/contacts" element={<Contacts />} />
+                      <Route path="/invoices" element={<Invoices />} />
+                      <Route path="/form" element={<Form />} />
+                      <Route path="/bar" element={<Bar />} />
+                      <Route path="/pie" element={<Pie />} />
+                      <Route path="/line" element={<Line />} />
+                      <Route path="/faq" element={<FAQ />} />
+                      <Route path="/OpVisit" element={<OpVisit />} />
+                      <Route path="/erAdmission" element={<ErAdmission />} />
+                      <Route path="/billing" element={<BILLING />} />
+                      <Route path="/medicationDispense" element={<MEDICATIONDISPENSE />} />
+                      <Route path="/medicationReturn" element={<MEDICATIONRETURN />} />
+                      <Route path="/inventory" element={<INVENTORY />} />
+                      <Route path="/medicalRecords" element={<MEDICALRECORDS />} />
+                      <Route path="/myPatients" element={<MYPATIENTS />} />
+                      <Route path="/geography" element={<Geography />} />
+                      <Route path="/OpManagment" element={<OpManagment />} />
+                      <Route path="/EMR" element={<Emr />} />
+                      <Route path="/priceMaster" element={<ADMIN />} />
+                      <Route path="/manageStock" element={<MANAGESTOCK />} />
+                      <Route path="/openingStock" element={<OPENINGSTOCK />} />
+                      <Route path="/ipd" element={<IPD />} />
+                      <Route path="/ip" element={<IP />} />
+                      <Route path="/incoming" element={<INCOMING />} />
+                      <Route path="/bedView" element={<BEDVIEW />} />
+                      <Route path="/hospitalPriceMaster" element={<HOSPITALPRICEMASTER />} />
+                      <Route path="/serviceMaster" element={<SERVICEMASTER />} />
+                      <Route path="/staffMaster" element={<STAFFMASTER />} />
+                      <Route path="/manageStaff" element={<MANAGESTAFF />} />
+                      <Route path="/addStaff" element={<ADDSTAFF />} />
+                      <Route path="/roleMaster" element={<ROLEMASTER />} />
+                      <Route path="/diagnosis" element={<DIAGNOSIS />} />
+                      <Route path="/extra" element={<EXTRA />} />
+                      <Route path="/extra1" element={<Extra1 />} />
+                    </Routes>
+                  </main>
+                  {showInactivityAlert && (
+                    <div className="inactivity-alert">
+                      <p>Your session will expire soon due to inactivity.</p>
+                      <button onClick={resetInactivityTimer}>Continue</button>
+                    </div>
+                  )}
+                </div>
+              </ThemeProvider>
+            </ColorModeContext.Provider>
+          ) : (
+            <Navigate to="/login" state={{ from: location }} replace />
+          )
+        }
+      />
+    </Routes>
+
   );
-};
+}
 
-export default Extra;
+export default App;
