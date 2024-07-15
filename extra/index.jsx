@@ -17,7 +17,7 @@ const Extra = () => {
     const { value } = event.target;
     setInParaForm(prevState => ({
       ...prevState,
-      [key]: value === 'yes' // Set directly to true or false based on 'yes' or 'no'
+      [key]: value
     }));
   };
 
@@ -28,11 +28,11 @@ const Extra = () => {
   };
 
   const inPara = [
-    { key: 'data1', label: 'Data 1' },
-    { key: 'data2', label: 'Data 2' },
-    { key: 'data3', label: 'Data 3' },
-    { key: 'data4', label: 'Data 4' },
-    { key: 'data5', label: 'Data 5' }
+    { key: 'data1', label: 'Data 1', options: ['yes', 'no'] },
+    { key: 'data2', label: 'Data 2', options: ['dog', 'cat'] },
+    { key: 'data3', label: 'Data 3', options: ['dog', 'cat'] },
+    { key: 'data4', label: 'Data 4', options: ['yes', 'no'] },
+    { key: 'data5', label: 'Data 5', options: ['yes', 'no'] }
   ];
 
   return (
@@ -42,7 +42,7 @@ const Extra = () => {
           <TableHead>
             <TableRow>
               <TableCell>Data</TableCell>
-              <TableCell>Select Yes/No</TableCell>
+              <TableCell>Select Value</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -51,11 +51,14 @@ const Extra = () => {
                 <TableCell>{row.label}</TableCell>
                 <TableCell>
                   <Select
-                    value={inParaForm[row.key] ? 'yes' : 'no'} // Directly set 'yes' or 'no'
+                    value={inParaForm[row.key]}
                     onChange={(e) => handleChange(e, row.key)}
                   >
-                    <MenuItem value="yes">Yes</MenuItem>
-                    <MenuItem value="no">No</MenuItem>
+                    {row.options.map(option => (
+                      <MenuItem key={option} value={option}>
+                        {option.charAt(0).toUpperCase() + option.slice(1)}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </TableCell>
               </TableRow>
