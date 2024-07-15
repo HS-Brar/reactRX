@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Selec
 
 const Extra = () => {
   // State to manage the selected values for each data item
-  const [formData, setFormData] = useState({
+  const [inParaForm, setInParaForm] = useState({
     data1: '',
     data2: '',
     data3: '',
@@ -15,19 +15,19 @@ const Extra = () => {
   // Handle change in Select component
   const handleChange = (event, key) => {
     const { value } = event.target;
-    setFormData(prevState => ({
+    setInParaForm(prevState => ({
       ...prevState,
-      [key]: value === 'yes' ? true : false // Convert 'yes' to true, 'no' to false
+      [key]: value === 'yes' // Set directly to true or false based on 'yes' or 'no'
     }));
   };
 
   // Handle form submission
   const handleSubmit = (event) => {
     event.preventDefault();
-    console.log(formData); // You can send this data to your API or perform further actions
+    console.log(inParaForm); // You can send this data to your API or perform further actions
   };
 
-  const rows = [
+  const inPara = [
     { key: 'data1', label: 'Data 1' },
     { key: 'data2', label: 'Data 2' },
     { key: 'data3', label: 'Data 3' },
@@ -46,15 +46,14 @@ const Extra = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.map((row, index) => (
+            {inPara.map((row, index) => (
               <TableRow key={index}>
                 <TableCell>{row.label}</TableCell>
                 <TableCell>
                   <Select
-                    value={formData[row.key] === true ? 'yes' : formData[row.key] === false ? 'no' : ''}
+                    value={inParaForm[row.key] ? 'yes' : 'no'} // Directly set 'yes' or 'no'
                     onChange={(e) => handleChange(e, row.key)}
                   >
-                    <MenuItem value="">Select</MenuItem>
                     <MenuItem value="yes">Yes</MenuItem>
                     <MenuItem value="no">No</MenuItem>
                   </Select>
