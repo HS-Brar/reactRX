@@ -1,91 +1,86 @@
-import React, { useState } from 'react';
-import { Button, Grid, Tabs, Tab, Box, Typography, IconButton } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-
-const TabPanel = (props) => {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box p={3}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-};
+import React from 'react';
+import { DataGrid } from '@mui/x-data-grid';
+import { Typography, Box } from '@mui/material';
 
 const Extra = () => {
-  const [tabIndex, setTabIndex] = useState(0);
-  const [tabs, setTabs] = useState([]);
+  const data = [
+    {
+      ADA1DT: {
+        rValue: "1122r",
+        sValue: "1122s",
+        validationStatus: "true",
+      },
+      ADAECD: {
+        rValue: "2222r",
+        sValue: "2222s",
+        validationStatus: "false",
+      },
+    },
+    {
+      ADA1DT: {
+        rValue: "3333rr",
+        sValue: "3333ss",
+        validationStatus: "false",
+      },
+      ADAECD: {
+        rValue: "4444rr",
+        sValue: "4444ss",
+        validationStatus: "true",
+      },
+    },
+  ];
 
-  const handleButtonClick = (label) => {
-    if (!tabs.includes(label)) {
-      setTabs([...tabs, label]);
-    }
-  };
+  // Prepare the rows for the DataGrid
+  const rows = data.flatMap((item, index) => [
+    { 
+      id: `${index}-r`, 
+      ADA1DT: item.ADA1DT.rValue, 
+      ADAECD: item.ADAECD.rValue, 
+      validationStatusADA1DT: item.ADA1DT.validationStatus, 
+      validationStatusADAECD: item.ADAECD.validationStatus 
+    },
+    { 
+      id: `${index}-s`, 
+      ADA1DT: item.ADA1DT.sValue, 
+      ADAECD: item.ADAECD.sValue, 
+      validationStatusADA1DT: item.ADA1DT.validationStatus, 
+      validationStatusADAECD: item.ADAECD.validationStatus 
+    },
+  ]);
 
-  const handleTabChange = (event, newValue) => {
-    setTabIndex(newValue);
-  };
-
-  const handleCloseTab = (index) => {
-    const newTabs = tabs.filter((tab, tabIndex) => tabIndex !== index - 1);
-    setTabs(newTabs);
-    setTabIndex(0);
-  };
+  const columns = [
+    { field: 'id', headerName: 'ID', width: 90 },
+    { 
+      field: 'ADA1DT', 
+      headerName: 'ADA1DT', 
+      width: 150,
+      renderCell: (params) => (
+        <span style={{ color: params.row.validationStatusADA1DT === 'true' ? 'black' : 'red' }}>
+          {params.value}
+        </span>
+      ),
+    },
+    { 
+      field: 'ADAECD', 
+      headerName: 'ADAECD', 
+      width: 150,
+      renderCell: (params) => (
+        <span style={{ color: params.row.validationStatusADAECD === 'true' ? 'black' : 'red' }}>
+          {params.value}
+        </span>
+      ),
+    },
+  ];
 
   return (
-    <div>
-      <Tabs value={tabIndex} onChange={handleTabChange}>
-        <Tab label="Home" />
-        {tabs.map((tab, index) => (
-          <Tab
-            key={index}
-            label={
-              <span>
-                {tab}
-                <IconButton
-                  size="small"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleCloseTab(index + 1);
-                  }}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </span>
-            }
-          />
-        ))}
-      </Tabs>
-
-      <TabPanel value={tabIndex} index={0}>
-        <Grid container spacing={2} justifyContent="center">
-          <Grid item>
-            <Button variant="contained" onClick={() => handleButtonClick('4-Ntwk')}>4-Ntwk</Button>
-          </Grid>
-          <Grid item>
-            <Button variant="contained" onClick={() => handleButtonClick('28-Ntwk')}>28-Ntwk</Button>
-          </Grid>
-          <Grid item>
-            <Button variant="contained" onClick={() => handleButtonClick('10-Ntwk')}>10-Ntwk</Button>
-          </Grid>
-        </Grid>
-      </TabPanel>
-      {tabs.map((tab, index) => (
-        <TabPanel key={index} value={tabIndex} index={index + 1}>
-          Content for {tab}
-        </TabPanel>
-      ))}
-    </div>
+    <Box>
+      <Typography variant="h4" gutterBottom>
+        Data Grid
+      </Typography>
+      <div style={{ height: 400, width: '100%' }}>
+        <DataGrid rows={rows} columns={columns} pageSize={5} />
+      </div>
+    </Box>
   );
 };
 
