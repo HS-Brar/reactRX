@@ -1,74 +1,90 @@
 import React, { useState } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Select, MenuItem, Paper, Button } from '@mui/material';
+import { Button, Grid, Tabs, Tab, Box, Typography, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+
+const TabPanel = (props) => {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box p={3}>
+          <Typography>{children}</Typography>
+        </Box>
+      )}
+    </div>
+  );
+};
 
 const Extra = () => {
-  // State to manage the selected values for each data item
-  const [inParaForm, setInParaForm] = useState({
-    data1: '',
-    data2: '',
-    data3: '',
-    data4: '',
-    data5: '',
-    sotId: 0 // You may adjust this as per your requirement
-  });
+  const [tabIndex, setTabIndex] = useState(0);
+  const [tabs, setTabs] = useState([]);
 
-  // Handle change in Select component
-  const handleChange = (event, key) => {
-    const { value } = event.target;
-    setInParaForm(prevState => ({
-      ...prevState,
-      [key]: value
-    }));
+  const handleButtonClick = (label) => {
+    if (!tabs.includes(label)) {
+      setTabs([...tabs, label]);
+    }
   };
 
-  // Handle form submission
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    console.log(inParaForm); // You can send this data to your API or perform further actions
+  const handleTabChange = (event, newValue) => {
+    setTabIndex(newValue);
   };
 
-  const inPara = [
-    { key: 'data1', label: 'Data 1', options: ['yes', 'no'] },
-    { key: 'data2', label: 'Data 2', options: ['dog', 'cat'] },
-    { key: 'data3', label: 'Data 3', options: ['dog', 'cat'] },
-    { key: 'data4', label: 'Data 4', options: ['yes', 'no'] },
-    { key: 'data5', label: 'Data 5', options: ['yes', 'no'] }
-  ];
+  const handleCloseTab = (index) => {
+    const newTabs = tabs.filter((tab, tabIndex) => tabIndex !== index - 1);
+    setTabs(newTabs);
+    setTabIndex(0);
+  };
 
   return (
     <div>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Data</TableCell>
-              <TableCell>Select Value</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {inPara.map((row, index) => (
-              <TableRow key={index}>
-                <TableCell>{row.label}</TableCell>
-                <TableCell>
-                  <Select
-                    value={inParaForm[row.key]}
-                    onChange={(e) => handleChange(e, row.key)}
-                  >
-                    {row.options.map(option => (
-                      <MenuItem key={option} value={option}>
-                        {option.charAt(0).toUpperCase() + option.slice(1)}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <Button variant="contained" color="primary" onClick={handleSubmit}>
-        Submit
-      </Button>
+      <Tabs value={tabIndex} onChange={handleTabChange}>
+        <Tab label="Home" />
+        {tabs.map((tab, index) => (
+          <Tab
+            key={index}
+            label={
+              <span>
+                {tab}
+                <IconButton
+                  size="small"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleCloseTab(index + 1);
+                  }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </span>
+            }
+          />
+        ))}
+      </Tabs>
+
+      <TabPanel value={tabIndex} index={0}>
+        <Grid container spacing={2} justifyContent="center">
+          <Grid item>
+            <Button variant="contained" onClick={() => handleButtonClick('4-Ntwk')}>4-Ntwk</Button>
+          </Grid>
+          <Grid item>
+            <Button variant="contained" onClick={() => handleButtonClick('28-Ntwk')}>28-Ntwk</Button>
+          </Grid>
+          <Grid item>
+            <Button variant="contained" onClick={() => handleButtonClick('10-Ntwk')}>10-Ntwk</Button>
+          </Grid>
+        </Grid>
+      </TabPanel>
+      {tabs.map((tab, index) => (
+        <TabPanel key={index} value={tabIndex} index={index + 1}>
+          Content for {tab}
+        </TabPanel>
+      ))}
     </div>
   );
 };
