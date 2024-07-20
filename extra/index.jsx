@@ -25,13 +25,14 @@ const TabPanel = (props) => {
   );
 };
 
-const Extra = () => {
+const Extra = ({ data }) => {
   const [tabIndex, setTabIndex] = useState(0);
   const [tabs, setTabs] = useState([]);
 
   const handleButtonClick = (label) => {
-    if (!tabs.includes(label)) {
-      setTabs([...tabs, label]);
+    const sotId = "8";
+    if (!tabs.some(tab => tab.label === label)) {
+      setTabs([...tabs, { label, sotId }]);
       setTabIndex(tabs.length + 1);
     }
   };
@@ -46,14 +47,15 @@ const Extra = () => {
     setTabIndex(0);
   };
 
-  const renderTabContent = (label) => {
+  const renderTabContent = (tab) => {
+    const { label, sotId } = tab;
     switch (label) {
       case '4-Ntwk':
-        return <Ntwk4 />;
+        return <Ntwk4 sotId={sotId} />;
       case '28-Ntwk':
-        return <Ntwk28 />;
+        return <Ntwk28 sotId={sotId} />;
       case '10-Ntwk':
-        return <Ntwk10 />;
+        return <Ntwk10 sotId={sotId} />;
       default:
         return null;
     }
@@ -68,7 +70,7 @@ const Extra = () => {
             key={index}
             label={
               <span>
-                {tab}
+                {tab.label}
                 <IconButton
                   size="small"
                   onClick={(event) => {
