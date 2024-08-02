@@ -1,111 +1,130 @@
-import React, { useState } from 'react';
-import { Button, Grid, Tabs, Tab, Box, Typography, IconButton } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import Ntwk4 from '../Ntwk4';
-import Ntwk28 from '../Ntwk28';
-import Ntwk10 from '../Ntwk10';
+import { useTheme } from "@mui/material";
+import { ResponsiveBar } from "@nivo/bar";
+import { tokens } from "../theme";
+import { mockBarData as data } from "../data/demoData";
 
-const TabPanel = (props) => {
-  const { children, value, index, ...other } = props;
+const BarChart = ({ isDashboard = false }) => {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
 
   return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box p={3}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
+    <ResponsiveBar
+      data={data}
+      theme={{
+        // added
+        axis: {
+          domain: {
+            line: {
+              stroke: colors.grey[100],
+            },
+          },
+          legend: {
+            text: {
+              fill: colors.grey[100],
+            },
+          },
+          ticks: {
+            line: {
+              stroke: colors.grey[100],
+              strokeWidth: 1,
+            },
+            text: {
+              fill: colors.grey[100],
+            },
+          },
+        },
+        legends: {
+          text: {
+            fill: colors.grey[100],
+          },
+        },
+      }}
+      keys={["WIP", "Pending", "BOM", "Closed"]}
+      indexBy="name"
+      margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
+      padding={0.3}
+      valueScale={{ type: "linear" }}
+      indexScale={{ type: "band", round: true }}
+      colors={{ scheme: "nivo" }}
+      defs={[
+        {
+          id: "dots",
+          type: "patternDots",
+          background: "inherit",
+          color: "#38bcb2",
+          size: 4,
+          padding: 1,
+          stagger: true,
+        },
+        {
+          id: "lines",
+          type: "patternLines",
+          background: "inherit",
+          color: "#eed312",
+          rotation: -45,
+          lineWidth: 6,
+          spacing: 10,
+        },
+      ]}
+      borderColor={{
+        from: "color",
+        modifiers: [["darker", "1.6"]],
+      }}
+      axisTop={null}
+      axisRight={null}
+      axisBottom={{
+        tickSize: 5,
+        tickPadding: 5,
+        tickRotation: 0,
+        legend: isDashboard ? undefined : "", // changed
+        legendPosition: "middle",
+        legendOffset: 32,
+      }}
+      axisLeft={{
+        tickSize: 5,
+        tickPadding: 5,
+        tickRotation: 0,
+        legend: isDashboard ? undefined : "", // changed
+        legendPosition: "middle",
+        legendOffset: -40,
+      }}
+      enableLabel={false}
+      labelSkipWidth={12}
+      labelSkipHeight={12}
+      labelTextColor={{
+        from: "color",
+        modifiers: [["darker", 1.6]],
+      }}
+      legends={[
+        {
+          dataFrom: "keys",
+          anchor: "bottom-right",
+          direction: "column",
+          justify: false,
+          translateX: 120,
+          translateY: 0,
+          itemsSpacing: 2,
+          itemWidth: 100,
+          itemHeight: 20,
+          itemDirection: "left-to-right",
+          itemOpacity: 0.85,
+          symbolSize: 20,
+          effects: [
+            {
+              on: "hover",
+              style: {
+                itemOpacity: 1,
+              },
+            },
+          ],
+        },
+      ]}
+      role="application"
+      barAriaLabel={function (e) {
+        return e.id + ": " + e.formattedValue + "" + e.indexValue;
+      }}
+    />
   );
 };
 
-const Extra = ({ data }) => {
-  const [tabIndex, setTabIndex] = useState(0);
-  const [tabs, setTabs] = useState([]);
-
-  const handleButtonClick = (label) => {
-    const sotId = "8";
-    if (!tabs.some(tab => tab.label === label)) {
-      setTabs([...tabs, { label, sotId }]);
-      setTabIndex(tabs.length + 1);
-    }
-  };
-
-  const handleTabChange = (event, newValue) => {
-    setTabIndex(newValue);
-  };
-
-  const handleCloseTab = (index) => {
-    const newTabs = tabs.filter((tab, tabIndex) => tabIndex !== index - 1);
-    setTabs(newTabs);
-    setTabIndex(0);
-  };
-
-  const renderTabContent = (tab) => {
-    const { label, sotId } = tab;
-    switch (label) {
-      case '4-Ntwk':
-        return <Ntwk4 sotId={sotId} />;
-      case '28-Ntwk':
-        return <Ntwk28 sotId={sotId} />;
-      case '10-Ntwk':
-        return <Ntwk10 sotId={sotId} />;
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div>
-      <Tabs value={tabIndex} onChange={handleTabChange}>
-        <Tab label="Home" />
-        {tabs.map((tab, index) => (
-          <Tab
-            key={index}
-            label={
-              <span>
-                {tab.label}
-                <IconButton
-                  size="small"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleCloseTab(index + 1);
-                  }}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </span>
-            }
-          />
-        ))}
-      </Tabs>
-
-      <TabPanel value={tabIndex} index={0}>
-        <Grid container spacing={2} justifyContent="center">
-          <Grid item>
-            <Button variant="contained" onClick={() => handleButtonClick('4-Ntwk')}>4-Ntwk</Button>
-          </Grid>
-          <Grid item>
-            <Button variant="contained" onClick={() => handleButtonClick('28-Ntwk')}>28-Ntwk</Button>
-          </Grid>
-          <Grid item>
-            <Button variant="contained" onClick={() => handleButtonClick('10-Ntwk')}>10-Ntwk</Button>
-          </Grid>
-        </Grid>
-      </TabPanel>
-      {tabs.map((tab, index) => (
-        <TabPanel key={index} value={tabIndex} index={index + 1}>
-          {renderTabContent(tab)}
-        </TabPanel>
-      ))}
-    </div>
-  );
-};
-
-export default Extra;
+export default BarChart;
