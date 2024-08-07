@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Button } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 
 const Extra1 = () => {
@@ -21,21 +21,41 @@ const Extra1 = () => {
     { id: 4, firstName: 'Emily', lastName: 'Davis', age: 35 },
   ];
 
-  // Function to export data to Excel
-  const exportToExcel = () => {
+  // Function to export data to Excel excluding the 'age' column and styling headers
+  const exportToExcel = async () => {
     // Create a new workbook and worksheet
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Users');
 
-    // Add the worksheet to the workbook
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
+    // Define columns for the worksheet
+    worksheet.columns = [
+      { header: 'ID', key: 'id', width: 10 },
+      { header: 'First name', key: 'firstName', width: 15 },
+      { header: 'Last name', key: 'lastName', width: 15 },
+    ];
 
-    // Convert the workbook to a binary string
-    const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    // Add rows excluding the 'age' column
+    rows.forEach(({ age, ...rest }) => {
+      worksheet.addRow(rest);
+    });
 
-    // Create a Blob and save it using file-saver
-    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    saveAs(blob, 'users.xlsx');
+    // Style individual header cells
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFF' } }, // White text
+      fill: { 
+        type: 'pattern', 
+        pattern: 'solid', 
+        fgColor: { argb: '4F81BD' } // Blue background
+      }
+    };
+
+    worksheet.getCell('A1').style = headerStyle; // ID
+    worksheet.getCell('B1').style = headerStyle; // First name
+    worksheet.getCell('C1').style = headerStyle; // Last name
+
+    // Generate buffer and save the file
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'users.xlsx');
   };
 
   return (
