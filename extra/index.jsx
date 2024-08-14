@@ -1,80 +1,138 @@
-import React from 'react';
-import { Box, Button } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, MenuItem, TextField, Button } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
+
+// Define options for the review dropdown
+const reviewOptions = ['Pass', 'Fail'];
 
 const Extra1 = () => {
-  // Define columns for the DataGrid
+  const [data, setData] = useState({
+    gppJson28Fields: [
+      { sn: 1, g: "ggggg", h: "hhhhh", i: "iiiii", status: 'not match', review: '' },
+      { sn: 2, g: "aaaaa", h: "bbbbb", i: "ccccc", status: 'match', review: '' },
+      { sn: 3, g: "ddddd", h: "eeeee", i: "fffff", status: 'not match', review: '' },
+      { sn: 4, g: "wwwww", h: "xxxxx", i: "yyyyy", status: 'match', review: '' },
+      { sn: 5, g: "zzzzz", h: "wwwww", i: "ttttt", status: 'not match', review: '' }
+    ],
+    match: 2,
+    notMatch: 3
+  });
+
+  // useEffect to simulate fetching or processing data on component mount
+  useEffect(() => {
+    console.log('Component mounted, data:', data);
+  }, [data]);
+
+  // Define columns for DataGrid including the new review column
   const columns = [
-    { field: 'id', headerName: 'ID', width: 90 },
-    { field: 'firstName', headerName: 'First name', width: 150 },
-    { field: 'lastName', headerName: 'Last name', width: 150 },
-    { field: 'age', headerName: 'Age', type: 'number', width: 110 },
-  ];
+    { field: 'sn', headerName: 'Sn', width: 90 },
+    { field: 'g', headerName: 'G', width: 150 },
+    { field: 'h', headerName: 'H', width: 150 },
+    { field: 'i', headerName: 'I', width: 150 },
+    { field: 'status', headerName: 'Status', width: 150 },
+    {
+      field: 'review',
+      headerName: 'Review',
+      width: 200,
+      renderCell: (params) => {
+        const { status, review } = params.row;
 
-  // Define rows of user data
-  const rows = [
-    { id: 1, firstName: 'John', lastName: 'Doe', age: 25 },
-    { id: 2, firstName: 'Jane', lastName: 'Smith', age: 30 },
-    { id: 3, firstName: 'Michael', lastName: 'Johnson', age: 45 },
-    { id: 4, firstName: 'Emily', lastName: 'Davis', age: 35 },
-  ];
-
-  // Function to export data to Excel excluding the 'age' column and styling headers
-  const exportToExcel = async () => {
-    // Create a new workbook and worksheet
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Users');
-
-    // Define columns for the worksheet
-    worksheet.columns = [
-      { header: 'ID', key: 'id', width: 10 },
-      { header: 'First name', key: 'firstName', width: 15 },
-      { header: 'Last name', key: 'lastName', width: 15 },
-    ];
-
-    // Add rows excluding the 'age' column
-    rows.forEach(({ age, ...rest }) => {
-      worksheet.addRow(rest);
-    });
-
-    // Style individual header cells
-    const headerStyle = {
-      font: { bold: true, color: { argb: 'FFFFFF' } }, // White text
-      fill: { 
-        type: 'pattern', 
-        pattern: 'solid', 
-        fgColor: { argb: '4F81BD' } // Blue background
+        return (
+          <TextField
+            select
+            value={review || ''} // Ensure the selected value is displayed
+            onChange={(event) => handleReviewChange(event, params.row.sn, event.target.value)}
+            disabled={status === 'match'} // Disable if status is "match"
+            fullWidth
+            variant="outlined"
+            size="small"
+          >
+            {reviewOptions.map(option => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </TextField>
+        );
       }
-    };
+    }
+  ];
 
-    worksheet.getCell('A1').style = headerStyle; // ID
-    worksheet.getCell('B1').style = headerStyle; // First name
-    worksheet.getCell('C1').style = headerStyle; // Last name
+  // Handler for changing review and updating global counts
+  const handleReviewChange = (event, rowId, newValue) => {
+    setData(prevData => {
+      const updatedFields = prevData.gppJson28Fields.map(item => {
+        if (item.sn === rowId) {
+          // Determine the current and new review values
+          const currentReview = item.review;
+          const newReview = newValue;
 
-    // Generate buffer and save the file
-    const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'users.xlsx');
+          // Update the review field
+          const updatedItem = { ...item, review: newReview };
+
+          // Adjust counts based on review value changes
+          if (currentReview === 'Pass' && newReview !== 'Pass') {
+            return {
+              ...updatedItem,
+              review: newReview,
+              match: prevData.match - 1,
+              notMatch: prevData.notMatch + 1
+            };
+          } else if (currentReview !== 'Pass' && newReview === 'Pass') {
+            return {
+              ...updatedItem,
+              review: newReview,
+              match: prevData.match + 1,
+              notMatch: prevData.notMatch - 1
+            };
+          }
+
+          return updatedItem;
+        }
+        return item;
+      });
+
+      return {
+        ...prevData,
+        gppJson28Fields: updatedFields,
+        match: prevData.match,
+        notMatch: prevData.notMatch
+      };
+    });
+  };
+
+  // Map the data to the format required by DataGrid with serial number, status, and review
+  const rows = data.gppJson28Fields.map(item => ({
+    sn: item.sn,
+    g: item.g,
+    h: item.h,
+    i: item.i,
+    status: item.status,
+    review: item.review || '' // Initialize review with an empty string if not set
+  }));
+
+  // Function to handle submit button click
+  const handleSubmit = () => {
+    console.log('Submitted data:', data.gppJson28Fields);
+    console.log('Match count:', data.match);
+    console.log('Not Match count:', data.notMatch);
+    // Here you can also display the data in a dialog, alert, or another component
   };
 
   return (
-    <Box width="100%" height={400}>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={exportToExcel}
-        style={{ marginBottom: 16 }}
-      >
-        Export to Excel
-      </Button>
+    <Box sx={{ height: 400, width: '100%' }}>
       <DataGrid
         rows={rows}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}
-        disableSelectionOnClick
+        getRowId={(row) => row.sn} // Use serial number as the unique identifier
       />
+      <Box sx={{ marginTop: 2 }}>
+        <Button variant="contained" color="primary" onClick={handleSubmit}>
+          Submit
+        </Button>
+      </Box>
     </Box>
   );
 };
