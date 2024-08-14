@@ -67,18 +67,25 @@ const Extra1 = () => {
       const updatedFields = prevData.gppJson28Fields.map(item => {
         if (item.sn === rowId) {
           const currentReview = item.review;
-          const updatedItem = { ...item, review: newValue };
+          let newStatus = item.status;
 
-          // Adjust counts based on review value changes
-          if (currentReview === 'Pass' && newValue !== 'Pass') {
-            newMatchCount -= 1;
-            newNotMatchCount += 1;
-          } else if (currentReview !== 'Pass' && newValue === 'Pass') {
-            newMatchCount += 1;
-            newNotMatchCount -= 1;
+          if (newValue === 'Pass') {
+            newStatus = 'match';
+            if (currentReview !== 'Pass') {
+              // Update counters if review changes from non-'Pass' to 'Pass'
+              newMatchCount += 1;
+              newNotMatchCount -= 1;
+            }
+          } else {
+            newStatus = 'not match';
+            if (currentReview === 'Pass') {
+              // Update counters if review changes from 'Pass' to non-'Pass'
+              newMatchCount -= 1;
+              newNotMatchCount += 1;
+            }
           }
 
-          return updatedItem;
+          return { ...item, review: newValue, status: newStatus };
         }
         return item;
       });
