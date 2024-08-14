@@ -61,30 +61,21 @@ const Extra1 = () => {
   // Handler for changing review and updating global counts
   const handleReviewChange = (event, rowId, newValue) => {
     setData(prevData => {
+      let newMatchCount = prevData.match;
+      let newNotMatchCount = prevData.notMatch;
+
       const updatedFields = prevData.gppJson28Fields.map(item => {
         if (item.sn === rowId) {
-          // Determine the current and new review values
           const currentReview = item.review;
-          const newReview = newValue;
-
-          // Update the review field
-          const updatedItem = { ...item, review: newReview };
+          const updatedItem = { ...item, review: newValue };
 
           // Adjust counts based on review value changes
-          if (currentReview === 'Pass' && newReview !== 'Pass') {
-            return {
-              ...updatedItem,
-              review: newReview,
-              match: prevData.match - 1,
-              notMatch: prevData.notMatch + 1
-            };
-          } else if (currentReview !== 'Pass' && newReview === 'Pass') {
-            return {
-              ...updatedItem,
-              review: newReview,
-              match: prevData.match + 1,
-              notMatch: prevData.notMatch - 1
-            };
+          if (currentReview === 'Pass' && newValue !== 'Pass') {
+            newMatchCount -= 1;
+            newNotMatchCount += 1;
+          } else if (currentReview !== 'Pass' && newValue === 'Pass') {
+            newMatchCount += 1;
+            newNotMatchCount -= 1;
           }
 
           return updatedItem;
@@ -95,13 +86,13 @@ const Extra1 = () => {
       return {
         ...prevData,
         gppJson28Fields: updatedFields,
-        match: prevData.match,
-        notMatch: prevData.notMatch
+        match: newMatchCount,
+        notMatch: newNotMatchCount
       };
     });
   };
 
-  // Map the data to the format required by DataGrid with serial number, status, and review
+  // Map the data to the format required by DataGrid
   const rows = data.gppJson28Fields.map(item => ({
     sn: item.sn,
     g: item.g,
