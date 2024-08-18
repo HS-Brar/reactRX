@@ -4,11 +4,11 @@ import { DataGrid } from '@mui/x-data-grid';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 
-// Sample data for demonstration
+// Sample data for demonstration with a gender field
 const rows = [
-  { id: 1, name: 'John Doe', email: 'john.doe@example.com', age: 30, status: 'Match' },
-  { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', age: 25, status: 'Not Match' },
-  { id: 3, name: 'Alice Johnson', email: 'alice.johnson@example.com', age: 35, status: 'Match' },
+  { id: 1, name: 'John Doe', email: 'john.doe@example.com', age: 30, status: 'Match', gender: 'Male' },
+  { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', age: 25, status: 'Not Match', gender: 'Female' },
+  { id: 3, name: 'Alice Johnson', email: 'alice.johnson@example.com', age: 35, status: 'Match', gender: 'Female' },
 ];
 
 // Column definitions for the DataGrid
@@ -18,6 +18,7 @@ const columns = [
   { field: 'email', headerName: 'Email', width: 250 },
   { field: 'age', headerName: 'Age', width: 100 },
   { field: 'status', headerName: 'Status', width: 150 },
+  { field: 'gender', headerName: 'Gender', width: 120 }, // Added Gender column
 ];
 
 const Extra1 = () => {
@@ -27,12 +28,16 @@ const Extra1 = () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Sheet1');
 
-    // Define column headers with styling
-    worksheet.columns = columns.map(col => ({
-      header: col.headerName,
-      key: col.field,
-      width: col.width / 10, // Adjust width for readability
-    }));
+    // Extract column headers and keys from columns definitions
+    const exportColumns = columns
+      .filter(col => col.field !== 'gender') // Exclude gender column from export
+      .map(col => ({
+        header: col.headerName,
+        key: col.field,
+        width: col.width / 10 // Adjust width for readability
+      }));
+
+    worksheet.columns = exportColumns;
 
     // Style header row
     worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
@@ -43,23 +48,20 @@ const Extra1 = () => {
       };
     });
 
-    // Add rows data and style the status column
+    // Add rows data excluding the gender column
     rows.forEach((row) => {
-      const excelRow = worksheet.addRow(row);
+      const { gender, ...exportRow } = row; // Exclude gender column
+      const excelRow = worksheet.addRow(exportRow);
 
-      // Style the status cell
-      const statusCell = excelRow.getCell(columns.findIndex(col => col.field === 'status') + 1);
+      // Style the status cell text
+      const statusCell = excelRow.getCell(exportColumns.findIndex(col => col.key === 'status') + 1);
       if (row.status === 'Match') {
-        statusCell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: '00FF00' } // Green background color
+        statusCell.font = {
+          color: { argb: '4CAF50' } // Green text color
         };
       } else if (row.status === 'Not Match') {
-        statusCell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FF0000' } // Red background color
+        statusCell.font = {
+          color: { argb: 'F44336' } // Red text color
         };
       }
     });
