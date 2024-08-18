@@ -73,9 +73,10 @@ const Extra1 = () => {
     // Add your saving logic here (e.g., make an API call)
   };
 
+  // Apply review to selected rows
   const applyReviewToSelected = () => {
     const updatedRows = saveForm.json.map((row) =>
-      (selectedRows.includes(row.id) || row.status === 'N')
+      selectedRows.includes(row.id)
         ? { ...row, review: reviewValue }
         : row
     );
@@ -119,7 +120,7 @@ const Extra1 = () => {
         <Button
           variant="contained"
           color="secondary"
-          onClick={() => applyReviewToSelected()}
+          onClick={applyReviewToSelected}
         >
           Apply Review
         </Button>
