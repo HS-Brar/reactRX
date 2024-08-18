@@ -1,136 +1,92 @@
-import React, { useState, useEffect } from 'react';
-import { Box, MenuItem, TextField, Button } from '@mui/material';
+import React from 'react';
+import { Box, Button } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
-// Define options for the review dropdown
-const reviewOptions = ['Pass', 'Fail'];
+// Sample data for demonstration
+const rows = [
+  { id: 1, name: 'John Doe', email: 'john.doe@example.com', age: 30, status: 'Match' },
+  { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', age: 25, status: 'Not Match' },
+  { id: 3, name: 'Alice Johnson', email: 'alice.johnson@example.com', age: 35, status: 'Match' },
+];
+
+// Column definitions for the DataGrid
+const columns = [
+  { field: 'id', headerName: 'ID', width: 90 },
+  { field: 'name', headerName: 'Name', width: 150 },
+  { field: 'email', headerName: 'Email', width: 250 },
+  { field: 'age', headerName: 'Age', width: 100 },
+  { field: 'status', headerName: 'Status', width: 150 },
+];
 
 const Extra1 = () => {
-  const [data, setData] = useState({
-    gppJson28Fields: [
-      { sn: 1, g: "ggggg", h: "hhhhh", i: "iiiii", status: 'not match', review: '' },
-      { sn: 2, g: "aaaaa", h: "bbbbb", i: "ccccc", status: 'match', review: '' },
-      { sn: 3, g: "ddddd", h: "eeeee", i: "fffff", status: 'not match', review: '' },
-      { sn: 4, g: "wwwww", h: "xxxxx", i: "yyyyy", status: 'match', review: '' },
-      { sn: 5, g: "zzzzz", h: "wwwww", i: "ttttt", status: 'not match', review: '' }
-    ],
-    match: 2,
-    notMatch: 3
-  });
+  // Function to handle export
+  const handleExport = async () => {
+    // Create a new workbook and worksheet
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Sheet1');
 
-  // useEffect to simulate fetching or processing data on component mount
-  useEffect(() => {
-    console.log('Component mounted, data:', data);
-  }, [data]);
+    // Define column headers with styling
+    worksheet.columns = columns.map(col => ({
+      header: col.headerName,
+      key: col.field,
+      width: col.width / 10, // Adjust width for readability
+    }));
 
-  // Define columns for DataGrid including the new review column
-  const columns = [
-    { field: 'sn', headerName: 'Sn', width: 90 },
-    { field: 'g', headerName: 'G', width: 150 },
-    { field: 'h', headerName: 'H', width: 150 },
-    { field: 'i', headerName: 'I', width: 150 },
-    { field: 'status', headerName: 'Status', width: 150 },
-    {
-      field: 'review',
-      headerName: 'Review',
-      width: 200,
-      renderCell: (params) => {
-        const { status, review } = params.row;
-
-        return (
-          <TextField
-            select
-            value={review || ''} // Ensure the selected value is displayed
-            onChange={(event) => handleReviewChange(event, params.row.sn, event.target.value)}
-            disabled={status === 'match'} // Disable if status is "match"
-            fullWidth
-            variant="outlined"
-            size="small"
-          >
-            {reviewOptions.map(option => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </TextField>
-        );
-      }
-    }
-  ];
-
-  // Handler for changing review and updating global counts
-  const handleReviewChange = (event, rowId, newValue) => {
-    setData(prevData => {
-      let newMatchCount = prevData.match;
-      let newNotMatchCount = prevData.notMatch;
-
-      const updatedFields = prevData.gppJson28Fields.map(item => {
-        if (item.sn === rowId) {
-          const currentReview = item.review;
-          let newStatus = item.status;
-
-          if (newValue === 'Pass') {
-            newStatus = 'match';
-            if (currentReview !== 'Pass') {
-              // Update counters if review changes from non-'Pass' to 'Pass'
-              newMatchCount += 1;
-              newNotMatchCount -= 1;
-            }
-          } else {
-            newStatus = 'not match';
-            if (currentReview === 'Pass') {
-              // Update counters if review changes from 'Pass' to non-'Pass'
-              newMatchCount -= 1;
-              newNotMatchCount += 1;
-            }
-          }
-
-          return { ...item, review: newValue, status: newStatus };
-        }
-        return item;
-      });
-
-      return {
-        ...prevData,
-        gppJson28Fields: updatedFields,
-        match: newMatchCount,
-        notMatch: newNotMatchCount
+    // Style header row
+    worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFFF00' } // Yellow background color
       };
     });
-  };
 
-  // Map the data to the format required by DataGrid
-  const rows = data.gppJson28Fields.map(item => ({
-    sn: item.sn,
-    g: item.g,
-    h: item.h,
-    i: item.i,
-    status: item.status,
-    review: item.review || '' // Initialize review with an empty string if not set
-  }));
+    // Add rows data and style the status column
+    rows.forEach((row) => {
+      const excelRow = worksheet.addRow(row);
 
-  // Function to handle submit button click
-  const handleSubmit = () => {
-    console.log('Submitted data:', data.gppJson28Fields);
-    console.log('Match count:', data.match);
-    console.log('Not Match count:', data.notMatch);
-    // Here you can also display the data in a dialog, alert, or another component
+      // Style the status cell
+      const statusCell = excelRow.getCell(columns.findIndex(col => col.field === 'status') + 1);
+      if (row.status === 'Match') {
+        statusCell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: '00FF00' } // Green background color
+        };
+      } else if (row.status === 'Not Match') {
+        statusCell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF0000' } // Red background color
+        };
+      }
+    });
+
+    // Convert workbook to buffer and save as file
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), 'UserInfo.xlsx');
   };
 
   return (
     <Box sx={{ height: 400, width: '100%' }}>
+      <Button 
+        variant="contained" 
+        color="primary" 
+        onClick={handleExport} 
+        sx={{ marginBottom: 2 }}
+      >
+        Export as Excel
+      </Button>
       <DataGrid
         rows={rows}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}
-        getRowId={(row) => row.sn} // Use serial number as the unique identifier
+        checkboxSelection
+        disableSelectionOnClick
       />
-      <Box sx={{ marginTop: 2 }}>
-        <Button variant="contained" color="primary" onClick={handleSubmit}>
-          Submit
-        </Button>
-      </Box>
     </Box>
   );
 };
