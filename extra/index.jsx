@@ -42,7 +42,7 @@ const columns = [
     field: 'note',
     headerName: 'Note',
     width: 150,
-    editable: true, // Make this column editable
+    editable: true,
     renderCell: (params) => (
       <TextField
         variant="outlined"
@@ -64,6 +64,8 @@ const Extra1 = () => {
     userId: 1,
     json: [],
   });
+  const [reviewValue, setReviewValue] = useState('Pass');
+  const [selectedRows, setSelectedRows] = useState([]);
 
   // Handle Save button click
   const handleSave = () => {
@@ -71,12 +73,21 @@ const Extra1 = () => {
     // Add your saving logic here (e.g., make an API call)
   };
 
+  const applyReviewToSelected = () => {
+    const updatedRows = saveForm.json.map((row) =>
+      (selectedRows.includes(row.id) || row.status === 'N')
+        ? { ...row, review: reviewValue }
+        : row
+    );
+    setSaveForm({ ...saveForm, json: updatedRows });
+  };
+
   useEffect(() => {
     // Simulate an API call
     setTimeout(() => {
-      // Fake data returned from the API, now including the 'status' and 'review' fields
+      // Fake data returned from the API
       const fetchedData = [
-        { id: 1, name: 'John Doe', email: 'john.doe@example.com', age: 28, note: '', status: 'Y', review: 'Pass' },
+        { id: 1, name: 'John Doe', email: 'john.doe@example.com', age: 28, note: '', status: 'N', review: 'Fail' },
         { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', age: 34, note: '', status: 'N', review: 'Fail' },
         { id: 3, name: 'Alice Johnson', email: 'alice.johnson@example.com', age: 45, note: '', status: 'Y', review: 'Pass' },
         { id: 4, name: 'Bob Brown', email: 'bob.brown@example.com', age: 52, note: '', status: 'N', review: 'Fail' },
@@ -91,13 +102,38 @@ const Extra1 = () => {
   }, []);
 
   return (
-    <Box sx={{ height: 400, width: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ height: 600, width: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', mb: 2, alignItems: 'center' }}>
+        <TextField
+          select
+          label="Review Value"
+          value={reviewValue}
+          onChange={(event) => setReviewValue(event.target.value)}
+          variant="outlined"
+          size="small"
+          sx={{ mr: 2 }}
+        >
+          <MenuItem value="Pass">Pass</MenuItem>
+          <MenuItem value="Fail">Fail</MenuItem>
+        </TextField>
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => applyReviewToSelected()}
+        >
+          Apply Review
+        </Button>
+      </Box>
       <Box sx={{ flex: 1, mb: 2 }}>
         <DataGrid
           rows={saveForm.json}
           columns={columns}
           pageSize={5}
           rowsPerPageOptions={[5]}
+          checkboxSelection
+          onSelectionModelChange={(newSelection) => {
+            setSelectedRows(newSelection);
+          }}
           processRowUpdate={(newRow) => {
             const updatedRows = saveForm.json.map((row) =>
               row.id === newRow.id ? { ...row, ...newRow } : row
