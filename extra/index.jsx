@@ -1,155 +1,218 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, TextField, MenuItem } from '@mui/material';
+import { Box, Button, TextField, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-
-// Define columns
-const columns = [
-  { field: 'id', headerName: 'ID', width: 90 },
-  { field: 'name', headerName: 'Name', width: 150 },
-  { field: 'email', headerName: 'Email', width: 250 },
-  { field: 'age', headerName: 'Age', width: 110 },
-  {
-    field: 'status',
-    headerName: 'Status',
-    width: 110,
-    valueGetter: (params) => params.row.status || 'N', // Default to 'N' if status is not defined
-  },
-  {
-    field: 'review',
-    headerName: 'Review',
-    width: 150,
-    editable: true,
-    renderCell: (params) => (
-      <TextField
-        select
-        disabled={params.row.status === 'Y'}
-        variant="outlined"
-        size="small"
-        fullWidth
-        value={params.value || ''}
-        onChange={(event) => {
-          const newValue = event.target.value;
-          const updatedRow = { ...params.row, review: newValue };
-          params.api.updateRows([{ id: params.id, ...updatedRow }]);
-        }}
-      >
-        <MenuItem value="Pass">Pass</MenuItem>
-        <MenuItem value="Fail">Fail</MenuItem>
-      </TextField>
-    ),
-  },
-  {
-    field: 'note',
-    headerName: 'Note',
-    width: 150,
-    editable: true,
-    renderCell: (params) => (
-      <TextField
-        variant="outlined"
-        disabled={params.row.status === 'Y'}
-        size="small"
-        fullWidth
-        value={params.value || ''}
-        onChange={(event) => {
-          const newValue = event.target.value;
-          params.api.setEditCellValue({ id: params.id, field: params.field, value: newValue });
-        }}
-      />
-    ),
-  },
-];
 
 const Extra1 = () => {
   const [saveForm, setSaveForm] = useState({
     userId: 1,
-    json: [],
+    json: {
+      gppJson28Fields: [],
+      gppMatch: 0,
+      gppNotMatch: 0
+    }
   });
-  const [reviewValue, setReviewValue] = useState('Pass');
-  const [selectedRows, setSelectedRows] = useState([]);
-
-  // Handle Save button click
-  const handleSave = () => {
-    console.log('Saving data:', saveForm.json);
-    // Add your saving logic here (e.g., make an API call)
-  };
-
-  // Apply review to selected rows
-  const applyReviewToSelected = () => {
-    const updatedRows = saveForm.json.map((row) =>
-      selectedRows.includes(row.id)
-        ? { ...row, review: reviewValue }
-        : row
-    );
-    setSaveForm({ ...saveForm, json: updatedRows });
-  };
+  const [bulkReview, setBulkReview] = useState(''); // Separate state for bulk review
+  const [selectedIds, setSelectedIds] = useState([]); // Separate state for selected rows
 
   useEffect(() => {
-    // Simulate an API call
-    setTimeout(() => {
-      // Fake data returned from the API
-      const fetchedData = [
-        { id: 1, name: 'John Doe', email: 'john.doe@example.com', age: 28, note: '', status: 'N', review: 'Fail' },
-        { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', age: 34, note: '', status: 'N', review: 'Fail' },
-        { id: 3, name: 'Alice Johnson', email: 'alice.johnson@example.com', age: 45, note: '', status: 'Y', review: 'Pass' },
-        { id: 4, name: 'Bob Brown', email: 'bob.brown@example.com', age: 52, note: '', status: 'N', review: 'Fail' },
-      ];
+    // Hardcoded mock data with status
+    const mockData = [
+      { Sn: 1, name: 'John Doe', email: 'john.doe@example.com', status: 'Matched', note: '' },
+      { Sn: 2, name: 'Jane Smith', email: 'jane.smith@example.com', status: 'Not Matched', note: '' },
+      { Sn: 3, name: 'Emily Johnson', email: 'emily.johnson@example.com', status: 'Matched', note: '' },
+      { Sn: 4, name: 'Michael Brown', email: 'michael.brown@example.com', status: 'Not Matched', note: '' },
+      { Sn: 5, name: 'Sarah Davis', email: 'sarah.davis@example.com', status: 'Matched', note: '' },
+      { Sn: 6, name: 'David Wilson', email: 'david.wilson@example.com', status: 'Not Matched', note: '' },
+      { Sn: 7, name: 'Laura Martinez', email: 'laura.martinez@example.com', status: 'Matched', note: '' },
+      { Sn: 8, name: 'James Lee', email: 'james.lee@example.com', status: 'Not Matched', note: '' },
+      { Sn: 9, name: 'Linda Taylor', email: 'linda.taylor@example.com', status: 'Matched', note: '' },
+      { Sn: 10, name: 'Robert Anderson', email: 'robert.anderson@example.com', status: 'Not Matched', note: '' }
+    ];
 
-      // Update state with the fetched data
-      setSaveForm(prevState => ({
-        ...prevState,
-        json: fetchedData,
-      }));
-    }, 1000); // Simulate a 1-second delay
+    // Calculate initial gppMatch and gppNotMatch
+    const gppMatch = mockData.filter(row => row.status === 'Matched').length;
+    const gppNotMatch = mockData.filter(row => row.status === 'Not Matched').length;
+
+    setSaveForm({
+      userId: 1,
+      json: {
+        gppJson28Fields: mockData.map(row => ({ ...row, review: '' })), // Initialize review state
+        gppMatch: gppMatch,
+        gppNotMatch: gppNotMatch
+      }
+    });
   }, []);
 
-  return (
-    <Box sx={{ height: 600, width: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', mb: 2, alignItems: 'center' }}>
+  const handleReviewChange = (Sn, newReview) => {
+    setSaveForm(prevState => {
+      const updatedFields = prevState.json.gppJson28Fields.map(row => {
+        if (row.Sn === Sn) {
+          return { ...row, review: newReview }; // Track review changes without altering status
+        }
+        return row;
+      });
+
+      return {
+        ...prevState,
+        json: {
+          ...prevState.json,
+          gppJson28Fields: updatedFields
+        }
+      };
+    });
+  };
+
+  const handleNoteChange = (Sn, newNote) => {
+    setSaveForm(prevState => {
+      const updatedFields = prevState.json.gppJson28Fields.map(row => {
+        if (row.Sn === Sn) {
+          return { ...row, note: newNote }; // Track note changes without altering status
+        }
+        return row;
+      });
+
+      return {
+        ...prevState,
+        json: {
+          ...prevState.json,
+          gppJson28Fields: updatedFields
+        }
+      };
+    });
+  };
+
+  const handleBulkUpdate = () => {
+    setSaveForm(prevState => {
+      const updatedFields = prevState.json.gppJson28Fields.map(row => {
+        if (selectedIds.includes(row.Sn) && row.status === 'Not Matched') {
+          return { ...row, review: bulkReview }; // Apply bulk review to selected rows with "Not Matched" status
+        }
+        return row;
+      });
+
+      // Update counts based on bulk update
+      const newGppMatch = updatedFields.filter(row => row.status === 'Matched').length;
+      const newGppNotMatch = updatedFields.filter(row => row.status === 'Not Matched').length;
+
+      return {
+        ...prevState,
+        json: {
+          ...prevState.json,
+          gppJson28Fields: updatedFields,
+          gppMatch: newGppMatch,
+          gppNotMatch: newGppNotMatch
+        }
+      };
+    });
+  };
+
+  const handleSave = () => {
+    setSaveForm(prevState => {
+      const updatedFields = prevState.json.gppJson28Fields.map(row => {
+        if (row.review === 'Review Pass') {
+          return { ...row, status: 'Matched' }; // Update status only on save
+        }
+        return row;
+      });
+
+      const gppMatch = updatedFields.filter(row => row.status === 'Matched').length;
+      const gppNotMatch = updatedFields.filter(row => row.status === 'Not Matched').length;
+
+      return {
+        ...prevState,
+        json: {
+          ...prevState.json,
+          gppJson28Fields: updatedFields,
+          gppMatch: gppMatch,
+          gppNotMatch: gppNotMatch
+        }
+      };
+    });
+    console.log(saveForm);
+  };
+
+  const handleSelectionChange = (newSelection) => {
+    setSelectedIds(newSelection);
+  };
+
+  const columns = [
+    { field: 'Sn', headerName: 'Sn', width: 90 },
+    { field: 'name', headerName: 'Name', width: 150 },
+    { field: 'email', headerName: 'Email', width: 200 },
+    { field: 'status', headerName: 'Status', width: 150 },
+    {
+      field: 'review',
+      headerName: 'Review',
+      width: 180,
+      renderCell: (params) => (
         <TextField
           select
-          label="Review Value"
-          value={reviewValue}
-          onChange={(event) => setReviewValue(event.target.value)}
-          variant="outlined"
-          size="small"
-          sx={{ mr: 2 }}
+          value={params.row.review || ''}
+          onChange={(event) => handleReviewChange(params.row.Sn, event.target.value)}
+          fullWidth
+          disabled={params.row.status !== 'Not Matched'} // Disable if status is not "Not Matched"
         >
-          <MenuItem value="Pass">Pass</MenuItem>
-          <MenuItem value="Fail">Fail</MenuItem>
+          <MenuItem value="Review Pass">Review Pass</MenuItem>
+          <MenuItem value="Fix Needed">Fix Needed</MenuItem>
         </TextField>
+      )
+    },
+    {
+      field: 'note',
+      headerName: 'Note',
+      width: 200,
+      renderCell: (params) => (
+        <TextField
+          value={params.row.note || ''}
+          onChange={(event) => handleNoteChange(params.row.Sn, event.target.value)}
+          fullWidth
+          disabled={params.row.status !== 'Not Matched'} // Disable if status is not "Not Matched"
+        />
+      )
+    }
+  ];
+
+  return (
+    <Box sx={{ height: 650, width: '100%' }}>
+      <Box sx={{ mb: 2 }}>
+        <FormControl fullWidth>
+          <InputLabel>Bulk Review</InputLabel>
+          <Select
+            value={bulkReview}
+            onChange={(e) => setBulkReview(e.target.value)}
+          >
+            <MenuItem value="">Select Review</MenuItem>
+            <MenuItem value="Review Pass">Review Pass</MenuItem>
+            <MenuItem value="Fix Needed">Fix Needed</MenuItem>
+          </Select>
+        </FormControl>
         <Button
           variant="contained"
           color="secondary"
-          onClick={applyReviewToSelected}
+          onClick={handleBulkUpdate}
+          sx={{ mt: 2 }}
         >
-          Apply Review
+          Apply to Selected
         </Button>
       </Box>
-      <Box sx={{ flex: 1, mb: 2 }}>
-        <DataGrid
-          rows={saveForm.json}
-          columns={columns}
-          pageSize={5}
-          rowsPerPageOptions={[5]}
-          checkboxSelection
-          onSelectionModelChange={(newSelection) => {
-            setSelectedRows(newSelection);
-          }}
-          processRowUpdate={(newRow) => {
-            const updatedRows = saveForm.json.map((row) =>
-              row.id === newRow.id ? { ...row, ...newRow } : row
-            );
-            setSaveForm({ ...saveForm, json: updatedRows });
-            return newRow;
-          }}
-          experimentalFeatures={{ newEditingApi: true }} // Use new editing API for better support
-        />
-      </Box>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Button variant="contained" color="primary" onClick={handleSave}>
-          Save
-        </Button>
-      </Box>
+      <DataGrid
+        rows={saveForm.json.gppJson28Fields}
+        columns={columns}
+        pageSize={10}
+        rowsPerPageOptions={[10]}
+        checkboxSelection
+        onSelectionModelChange={(newSelection) => handleSelectionChange(newSelection)}
+        selectionModel={selectedIds}
+        getRowId={(row) => row.Sn} // Specify Sn as the unique id for each row
+      />
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleSave}
+        sx={{ mt: 2 }}
+      >
+        Save
+      </Button>
     </Box>
   );
 };
