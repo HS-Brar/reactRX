@@ -1,94 +1,118 @@
-import React from 'react';
-import { Box, Button } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Button, TextField, MenuItem } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
 
-// Sample data for demonstration with a gender field
-const rows = [
-  { id: 1, name: 'John Doe', email: 'john.doe@example.com', age: 30, status: 'Match', gender: 'Male' },
-  { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', age: 25, status: 'Not Match', gender: 'Female' },
-  { id: 3, name: 'Alice Johnson', email: 'alice.johnson@example.com', age: 35, status: 'Match', gender: 'Female' },
-];
-
-// Column definitions for the DataGrid
+// Define columns
 const columns = [
   { field: 'id', headerName: 'ID', width: 90 },
   { field: 'name', headerName: 'Name', width: 150 },
   { field: 'email', headerName: 'Email', width: 250 },
-  { field: 'age', headerName: 'Age', width: 100 },
-  { field: 'status', headerName: 'Status', width: 150 },
-  { field: 'gender', headerName: 'Gender', width: 120 }, // Added Gender column
+  { field: 'age', headerName: 'Age', width: 110 },
+  {
+    field: 'status',
+    headerName: 'Status',
+    width: 110,
+    valueGetter: (params) => params.row.status || 'N', // Default to 'N' if status is not defined
+  },
+  {
+    field: 'review',
+    headerName: 'Review',
+    width: 150,
+    editable: true,
+    renderCell: (params) => (
+      <TextField
+        select
+        disabled={params.row.status === 'Y'}
+        variant="outlined"
+        size="small"
+        fullWidth
+        value={params.value || ''}
+        onChange={(event) => {
+          const newValue = event.target.value;
+          const updatedRow = { ...params.row, review: newValue };
+          params.api.updateRows([{ id: params.id, ...updatedRow }]);
+        }}
+      >
+        <MenuItem value="Pass">Pass</MenuItem>
+        <MenuItem value="Fail">Fail</MenuItem>
+      </TextField>
+    ),
+  },
+  {
+    field: 'note',
+    headerName: 'Note',
+    width: 150,
+    editable: true, // Make this column editable
+    renderCell: (params) => (
+      <TextField
+        variant="outlined"
+        disabled={params.row.status === 'Y'}
+        size="small"
+        fullWidth
+        value={params.value || ''}
+        onChange={(event) => {
+          const newValue = event.target.value;
+          params.api.setEditCellValue({ id: params.id, field: params.field, value: newValue });
+        }}
+      />
+    ),
+  },
 ];
 
 const Extra1 = () => {
-  // Function to handle export
-  const handleExport = async () => {
-    // Create a new workbook and worksheet
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Sheet1');
+  const [saveForm, setSaveForm] = useState({
+    userId: 1,
+    json: [],
+  });
 
-    // Extract column headers and keys from columns definitions
-    const exportColumns = columns
-      .filter(col => col.field !== 'gender') // Exclude gender column from export
-      .map(col => ({
-        header: col.headerName,
-        key: col.field,
-        width: col.width / 10 // Adjust width for readability
-      }));
-
-    worksheet.columns = exportColumns;
-
-    // Style header row
-    worksheet.getRow(1).eachCell({ includeEmpty: true }, (cell) => {
-      cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FFFF00' } // Yellow background color
-      };
-    });
-
-    // Add rows data excluding the gender column
-    rows.forEach((row) => {
-      const { gender, ...exportRow } = row; // Exclude gender column
-      const excelRow = worksheet.addRow(exportRow);
-
-      // Style the status cell text
-      const statusCell = excelRow.getCell(exportColumns.findIndex(col => col.key === 'status') + 1);
-      if (row.status === 'Match') {
-        statusCell.font = {
-          color: { argb: '4CAF50' } // Green text color
-        };
-      } else if (row.status === 'Not Match') {
-        statusCell.font = {
-          color: { argb: 'F44336' } // Red text color
-        };
-      }
-    });
-
-    // Convert workbook to buffer and save as file
-    const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), 'UserInfo.xlsx');
+  // Handle Save button click
+  const handleSave = () => {
+    console.log('Saving data:', saveForm.json);
+    // Add your saving logic here (e.g., make an API call)
   };
 
+  useEffect(() => {
+    // Simulate an API call
+    setTimeout(() => {
+      // Fake data returned from the API, now including the 'status' and 'review' fields
+      const fetchedData = [
+        { id: 1, name: 'John Doe', email: 'john.doe@example.com', age: 28, note: '', status: 'Y', review: 'Pass' },
+        { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', age: 34, note: '', status: 'N', review: 'Fail' },
+        { id: 3, name: 'Alice Johnson', email: 'alice.johnson@example.com', age: 45, note: '', status: 'Y', review: 'Pass' },
+        { id: 4, name: 'Bob Brown', email: 'bob.brown@example.com', age: 52, note: '', status: 'N', review: 'Fail' },
+      ];
+
+      // Update state with the fetched data
+      setSaveForm(prevState => ({
+        ...prevState,
+        json: fetchedData,
+      }));
+    }, 1000); // Simulate a 1-second delay
+  }, []);
+
   return (
-    <Box sx={{ height: 400, width: '100%' }}>
-      <Button 
-        variant="contained" 
-        color="primary" 
-        onClick={handleExport} 
-        sx={{ marginBottom: 2 }}
-      >
-        Export as Excel
-      </Button>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        pageSize={5}
-        rowsPerPageOptions={[5]}
-        checkboxSelection
-        disableSelectionOnClick
-      />
+    <Box sx={{ height: 400, width: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ flex: 1, mb: 2 }}>
+        <DataGrid
+          rows={saveForm.json}
+          columns={columns}
+          pageSize={5}
+          rowsPerPageOptions={[5]}
+          processRowUpdate={(newRow) => {
+            const updatedRows = saveForm.json.map((row) =>
+              row.id === newRow.id ? { ...row, ...newRow } : row
+            );
+            setSaveForm({ ...saveForm, json: updatedRows });
+            return newRow;
+          }}
+          experimentalFeatures={{ newEditingApi: true }} // Use new editing API for better support
+        />
+      </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Button variant="contained" color="primary" onClick={handleSave}>
+          Save
+        </Button>
+      </Box>
     </Box>
   );
 };
