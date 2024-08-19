@@ -30,8 +30,8 @@ const Extra1 = () => {
     ];
 
     // Calculate initial gppMatch and gppNotMatch
-    const gppMatch = mockData.filter(row => row.status === 'Matched').length;
-    const gppNotMatch = mockData.filter(row => row.status === 'Not Matched').length;
+    const gppMatch = mockData.filter(row => row.status == 'Matched').length;
+    const gppNotMatch = mockData.filter(row => row.status == 'Not Matched').length;
 
     setSaveForm({
       userId: 1,
@@ -46,7 +46,7 @@ const Extra1 = () => {
   const handleReviewChange = (Sn, newReview) => {
     setSaveForm(prevState => {
       const updatedFields = prevState.json.gppJson28Fields.map(row => {
-        if (row.Sn === Sn) {
+        if (row.Sn == Sn) {
           return { ...row, review: newReview }; // Track review changes without altering status
         }
         return row;
@@ -65,7 +65,7 @@ const Extra1 = () => {
   const handleNoteChange = (Sn, newNote) => {
     setSaveForm(prevState => {
       const updatedFields = prevState.json.gppJson28Fields.map(row => {
-        if (row.Sn === Sn) {
+        if (row.Sn == Sn) {
           return { ...row, note: newNote }; // Track note changes without altering status
         }
         return row;
@@ -84,15 +84,15 @@ const Extra1 = () => {
   const handleBulkUpdate = () => {
     setSaveForm(prevState => {
       const updatedFields = prevState.json.gppJson28Fields.map(row => {
-        if (selectedIds.includes(row.Sn) && row.status === 'Not Matched') {
+        if (selectedIds.includes(row.Sn) && row.status == 'Not Matched') {
           return { ...row, review: bulkReview }; // Apply bulk review to selected rows with "Not Matched" status
         }
         return row;
       });
 
       // Update counts based on bulk update
-      const newGppMatch = updatedFields.filter(row => row.status === 'Matched').length;
-      const newGppNotMatch = updatedFields.filter(row => row.status === 'Not Matched').length;
+      const newGppMatch = updatedFields.filter(row => row.status == 'Matched').length;
+      const newGppNotMatch = updatedFields.filter(row => row.status == 'Not Matched').length;
 
       return {
         ...prevState,
@@ -106,30 +106,46 @@ const Extra1 = () => {
     });
   };
 
-  const handleSave = () => {
-    setSaveForm(prevState => {
-      const updatedFields = prevState.json.gppJson28Fields.map(row => {
-        if (row.review === 'Review Pass') {
-          return { ...row, status: 'Matched' }; // Update status only on save
-        }
-        return row;
-      });
+  const handleCalculation = () => {
+    // Create a copy of the current saveForm state
+    const newSaveForm = { ...saveForm };
 
-      const gppMatch = updatedFields.filter(row => row.status === 'Matched').length;
-      const gppNotMatch = updatedFields.filter(row => row.status === 'Not Matched').length;
-
-      return {
-        ...prevState,
-        json: {
-          ...prevState.json,
-          gppJson28Fields: updatedFields,
-          gppMatch: gppMatch,
-          gppNotMatch: gppNotMatch
-        }
-      };
+    // Apply the logic to update the status and counts
+    const updatedFields = newSaveForm.json.gppJson28Fields.map(row => {
+      if (row.review === 'Review Pass') {
+        return { ...row, status: 'Matched' }; // Update status only on save
+      }
+      return row;
     });
-    console.log(saveForm);
+
+    const gppMatch = updatedFields.filter(row => row.status === 'Matched').length;
+    const gppNotMatch = updatedFields.filter(row => row.status === 'Not Matched').length;
+
+    // Update the copy with the new data
+    newSaveForm.json = {
+      ...newSaveForm.json,
+      gppJson28Fields: updatedFields,
+      gppMatch: gppMatch,
+      gppNotMatch: gppNotMatch
+    };
+
+    // Update the state with the newSaveForm
+    setSaveForm(newSaveForm);
+
+    // Return the updated saveForm if needed
+    return newSaveForm;
   };
+
+  const handleSave = async () => {
+    const temp = handleCalculation();
+
+    // Simulate an API call
+    setTimeout(() => {
+      console.log("Updated saveForm state:", temp);
+    }, 500);
+  };
+
+
 
   const handleSelectionChange = (newSelection) => {
     setSelectedIds(newSelection);
