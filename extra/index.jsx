@@ -316,7 +316,8 @@ const Extra1 = () => {
         getRowId={(row) => row.Sn}
       />
       <Button
-        variant="contained"
+        variant="contai
+		ned"
         color="primary"
         onClick={handleSave}
         sx={{ mt: 2 }}
