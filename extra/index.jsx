@@ -1,85 +1,53 @@
 import React, { useState } from 'react';
-import { Box, Typography } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import CustomButton from '../../components/CustomButton';
-import ConfirmationDialog from '../../components/ConfirmationDialog';
-import { Button } from 'react-bootstrap';
+import { Button } from '@mui/material';
+import ConfirmationDialog from './ConfirmationDialog'; // Adjust the path as necessary
 
 const Extra2 = () => {
-  const [openDialog, setOpenDialog] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [currentAction, setCurrentAction] = useState(null);
 
-  // Data provided
-  const data = {
-    "auditorReportList": [
-      // your data here
-    ],
-    "totalClosed": 7,
-    "totalPending": 9,
-    "totalSendToBOM": 18,
-    "totalWIP": 16
+  const handleOpen = (action) => {
+    setCurrentAction(action);
+    setOpen(true);
   };
 
-  const columns = [
-    // your columns here
-  ];
-
-  const rows = data.auditorReportList.map((item) => ({
-    id: item.Sn,
-    ...item,
-    total: item.closed + item.pending + item.sendToBOM + item.wip
-  }));
-
-  const grandTotal = {
-    id: 'grandTotal',
-    Sn: '',
-    name: '',
-    closed: data.totalClosed,
-    pending: data.totalPending,
-    sendToBOM: data.totalSendToBOM,
-    wip: data.totalWIP,
-    total: data.totalClosed + data.totalPending + data.totalSendToBOM + data.totalWIP
+  const handleClose = () => {
+    setOpen(false);
   };
 
-  const rowsWithGrandTotal = [...rows, grandTotal];
-
-  const handleSaveClick = () => {
-    setOpenDialog(true);
-  };
-
-  const handleDialogClose = (confirmed) => {
-    setOpenDialog(false);
-    if (confirmed) {
-      // Handle save logic here
-      console.log('Data saved!');
-    } else {
-      console.log('Save action cancelled.');
+  const handleConfirm = () => {
+    if (currentAction === 'one') {
+      console.log('Action one performed');
+      // Perform handleOne task
+    } else if (currentAction === 'two') {
+      console.log('Action two performed');
+      // Perform handleTwo task
+    } else if (currentAction === 'three') {
+      console.log('Action three performed');
+      // Perform handleThree task
     }
   };
 
   return (
-    <Box sx={{ height: 400, width: '100%' }}>
-      <DataGrid
-        rows={rowsWithGrandTotal}
-        columns={columns}
-        pageSize={5}
-        rowsPerPageOptions={[5]}
-        getRowId={(row) => row.id}
-      />
-      <Button
-        onClick={handleSaveClick}
-        sx={{ marginTop: 2, borderRadius: '8px', fontWeight: 'bold' }}
-      >
-        Save
+    <>
+      <Button onClick={() => handleOpen('one')} variant="contained" color="primary">
+        One
+      </Button>
+      <Button onClick={() => handleOpen('two')} variant="contained" color="primary">
+        Two
+      </Button>
+      <Button onClick={() => handleOpen('three')} variant="contained" color="primary">
+        Three
       </Button>
 
       <ConfirmationDialog
-        open={openDialog}
-        onClose={handleDialogClose}
-        onConfirm={() => console.log('Data saved!')} // Pass the save function if necessary
-        title="Confirm Save"
-        message="Are you sure you want to save the changes?"
+        open={open}
+        onClose={handleClose}
+        onConfirm={handleConfirm}
+        title="Confirm Action"
+        message="Are you sure you want to perform this action?"
       />
-    </Box>
+    </>
   );
 };
 
