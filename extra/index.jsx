@@ -1,54 +1,43 @@
 import React, { useState } from 'react';
-import { Button } from '@mui/material';
-import ConfirmationDialog from './ConfirmationDialog'; // Adjust the path as necessary
+import { Checkbox, FormControlLabel } from '@mui/material';
 
-const Extra2 = () => {
-  const [open, setOpen] = useState(false);
-  const [currentAction, setCurrentAction] = useState(null);
+const Extra4 = () => {
+  // State to manage the checkbox's checked status
+  const [checked, setChecked] = useState(false);
 
-  const handleOpen = (action) => {
-    setCurrentAction(action);
-    setOpen(true);
+  // Handler for checkbox change
+  const handleChange = (event) => {
+    setChecked(event.target.checked);
   };
 
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  const handleConfirm = () => {
-    if (currentAction === 'one') {
-      console.log('Action one performed');
-      // Perform handleOne task
-    } else if (currentAction === 'two') {
-      console.log('Action two performed');
-      // Perform handleTwo task
-    } else if (currentAction === 'three') {
-      console.log('Action three performed');
-      // Perform handleThree task
-    }
+  // Task to perform when the label is clicked
+  const handleLabelClick = () => {
+    alert('Label clicked!');
+    // You can replace this with any other task you want to perform
   };
 
   return (
-    <>
-      <Button onClick={() => handleOpen('one')} variant="contained" color="primary">
-        One
-      </Button>
-      <Button onClick={() => handleOpen('two')} variant="contained" color="primary">
-        Two
-      </Button>
-      <Button onClick={() => handleOpen('three')} variant="contained" color="primary">
-        Three
-      </Button>
-
-      <ConfirmationDialog
-        open={open}
-        onClose={handleClose}
-        onConfirm={handleConfirm}
-        title="Confirm Action"
-        message="Are you sure you want to perform this action?"
+    <div>
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={checked}
+            onChange={handleChange}
+            name="exampleCheckbox"
+            color="primary"
+          />
+        }
+        label={
+          <span
+            style={{ cursor: 'pointer', textDecoration: 'underline', color: 'blue' }}
+            onClick={handleLabelClick}
+          >
+            Check me
+          </span>
+        }
       />
-    </>
+    </div>
   );
 };
 
-export default Extra2;
+export default Extra4;
