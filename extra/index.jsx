@@ -1,41 +1,49 @@
-import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import axios from 'axios';
+import React, { useEffect } from "react";
+import { Container, Box, Typography } from "@mui/material";
+import styled from "@emotion/styled";
+import Bg from "../../components/bg";
+
+const RootStyle = styled("div")({
+  background: "rgb(249, 250, 251)",
+  height: "100vh",
+  display: "grid",
+  placeItems: "center",
+});
 
 const Login = () => {
-  const location = useLocation();
-
   useEffect(() => {
-    const queryParams = new URLSearchParams(location.search);
-    const code = queryParams.get('code');
+    const redirectToAuth = () => {
+      const authUrl = `https://authgateway1-dev/as/authorization.oauth2?response_type=code&client_id=Reg&redirect_uri=http://localhost:4000/login/&acr_values=R1_MS-Kerbose&scope=openid profile address`;
+      window.location.href = authUrl; // Automatically redirect to OAuth2 URL
+    };
 
-    if (code) {
-      // Here you can send the code to your backend to exchange for tokens
-      const fetchToken = async () => {
-        try {
-          const response = await axios.post('https://your-token-endpoint', {
-            code,
-            redirect_uri: 'http://localhost:4000/login/',
-            client_id: 'hbApp',
-            grant_type: 'authorization_code'
-          });
-          console.log('Token response:', response.data);
-          // Handle tokens (e.g., save to local storage, update user state)
-        } catch (error) {
-          console.error('Error exchanging code for token:', error);
-        }
-      };
+    // Check if the user is already redirected
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
 
-      fetchToken();
+    if (!code) {
+      redirectToAuth(); // Only redirect if there's no authorization code
     } else {
-      console.error('No authorization code found in the URL.');
+      // Handle the received code (optional)
+      // You might want to exchange the code for tokens here
+      console.log("Authorization code received:", code);
     }
-  }, [location.search]);
+  }, []);
 
   return (
-    <div>
-      <h1>Logging in...</h1>
-    </div>
+    <RootStyle>
+      <Container>
+        <Box sx={{ padding: 2, background: "#fff", borderRadius: 2, textAlign: 'center' }}>
+          <Typography variant="h4" gutterBottom>
+            Redirecting to Login...
+          </Typography>
+          <Typography variant="body1">
+            If you are not redirected automatically, please click <a href="#">here</a>.
+          </Typography>
+        </Box>
+        <Bg />
+      </Container>
+    </RootStyle>
   );
 };
 
