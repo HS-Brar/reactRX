@@ -1,20 +1,10 @@
-function usePreventBackNavigation() {
-  const navigate = useNavigate();
+ // Create a mapping from required paths to sidebar items
+  const sidebarMap = sidebar.reduce((acc, item) => {
+    acc[item.path] = item;
+    return acc;
+  }, {});
 
-  useEffect(() => {
-    // Push the initial state
-    window.history.pushState(null, document.title, window.location.pathname);
-
-    const handlePopState = (event) => {
-      console.log("Back button clicked, preventing navigation");
-      // Push the current state again to keep the user on the current page
-      window.history.pushState(null, document.title, window.location.pathname);
-    };
-
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [navigate]);
-}
+  // Filter and order sidebar based on the required sequence
+  const orderedSidebar = requiredSequence
+    .filter(item => sidebarMap[item.path])
+    .map(item => sidebarMap[item.path]);
