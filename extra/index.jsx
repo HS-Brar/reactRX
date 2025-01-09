@@ -1,116 +1,79 @@
-import React, { useState } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Select,
-  MenuItem,
-  FormControl,
-  Button,
-  Box,
-} from '@mui/material';
-import Popup from '../../components/Popup';
+import React, { useState } from "react";
+import { DataGrid } from "@mui/x-data-grid";
+import { TextField } from "@mui/material";
 
-const Extra4 = () => {
-  const [ntwkIdPopup, setNtwkIdPopup] = useState(true);
-  const [idList] = useState(["INCCP", "OCMHLD", "CVS-EX", "OCMHCM", "*COVD2"]);
-  const [validateForm] = useState({
-    networkList: [
-      { "0": "BHSGEN", "1": "BHSGEN" },
-      { "0": "Optum Mail Networks, if present", "1": "OPTUML" },
-      { "0": "Optum Specialty Networks", "1": "SALVEO" },
-      { "0": "Optum-managed Retailed Networks", "1": "IRX9CT" },
-      { "0": "TALD", "1": "TALD" },
-    ],
-  });
+const Extra3 = () => {
+  const originalData = [
+    { id: 1, name: "Paras", age: 11, date: "01/31/20" },
+    { id: 2, name: "Dev", age: 21, date: "02/30/20" },
+    { id: 3, name: "Dinesh", age: 13, date: "01/31/20" },
+    { id: 4, name: "Paarth", age: 13, date: "01/30/20" },
+    { id: 5, name: "Harman", age: 23, date: "02/21/21" },
+  ];
 
-  // Initialize mappedNetworks to have the same structure as validateForm.networkList
-  const [mappedNetworks, setMappedNetworks] = useState(
-    idList.map((id) => ({ "0": "", "1": id }))
-  );
+  const [data, setData] = useState(originalData);
+  const [filters, setFilters] = useState({ name: "", age: "", date: "" });
 
-  // Handle dropdown change
-  const handleDropdownChange = (id, selectedNetworkName) => {
-    const selectedNetwork = validateForm.networkList.find(
-      (network) => network["0"] === selectedNetworkName
-    );
+  const columns = [
+    { field: "name", headerName: "Name", width: 150 },
+    { field: "age", headerName: "Age", width: 100 },
+    { field: "date", headerName: "Date", width: 150 },
+  ];
 
-    if (selectedNetwork) {
-      setMappedNetworks((prev) =>
-        prev.map((network) =>
-          network["1"] === id
-            ? { ...network, "0": selectedNetwork["0"] }
-            : network
-        )
-      );
-    }
-  };
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    const updatedFilters = { ...filters, [name]: value };
+    setFilters(updatedFilters);
 
-  // Save button handler
-  const handleSave = () => {
-    console.log("Mapped Networks:", mappedNetworks);
-    // Add your API call or further logic here
-    setNtwkIdPopup(false); // Close popup after saving
+    // Apply filters
+    const filteredData = originalData.filter((row) => {
+      const nameMatch = row.name
+        .toLowerCase()
+        .includes(updatedFilters.name.toLowerCase());
+      const ageMatch =
+        updatedFilters.age === "" ||
+        row.age === parseInt(updatedFilters.age, 10);
+      const dateMatch = row.date.includes(updatedFilters.date);
+      return nameMatch && ageMatch && dateMatch;
+    });
+
+    setData(filteredData);
   };
 
   return (
-    <Popup
-      title="Map Network IDs"
-      openPopup={ntwkIdPopup}
-      setOpenPopup={setNtwkIdPopup}
-      popupWidth={"md"}
-    >
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Network Name</TableCell>
-              <TableCell>Network ID</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {mappedNetworks.map((mappedNetwork) => (
-              <TableRow key={mappedNetwork["1"]}>
-                <TableCell>
-                  <FormControl fullWidth>
-                    <Select
-                      value={mappedNetwork["0"] || ""}
-                      onChange={(e) =>
-                        handleDropdownChange(mappedNetwork["1"], e.target.value)
-                      }
-                      displayEmpty
-                    >
-                      <MenuItem value="" disabled>
-                        Select Network Name
-                      </MenuItem>
-                      {validateForm.networkList.map((network, index) => (
-                        <MenuItem key={index} value={network["0"]}>
-                          {network["0"]}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </TableCell>
-                <TableCell>{mappedNetwork["1"]}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <Box sx={{ textAlign: "right", marginTop: 2 }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleSave}
-        >
-          Save
-        </Button>
-      </Box>
-    </Popup>
+    <div>
+      <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+        <TextField
+          label="Name"
+          variant="outlined"
+          size="small"
+          name="name"
+          value={filters.name}
+          onChange={handleFilterChange}
+        />
+        <TextField
+          label="Age"
+          variant="outlined"
+          size="small"
+          name="age"
+          value={filters.age}
+          onChange={handleFilterChange}
+          type="number"
+        />
+        <TextField
+          label="Date"
+          variant="outlined"
+          size="small"
+          name="date"
+          value={filters.date}
+          onChange={handleFilterChange}
+        />
+      </div>
+      <div style={{ height: 400, width: "100%" }}>
+        <DataGrid rows={data} columns={columns} pageSize={5} />
+      </div>
+    </div>
   );
 };
 
-export default Extra4;
+export default Extra3;
